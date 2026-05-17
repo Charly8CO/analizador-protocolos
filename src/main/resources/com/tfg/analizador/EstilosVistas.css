@@ -1,0 +1,101 @@
+.root {
+    -fx-accent-blue: #5da7e1;
+    -fx-panel-gray: #f0f0f0;     
+    -fx-header-dark: #cccccc;    
+    -fx-button-green: #22c55e;   
+    -fx-button-gray: #d1d1d1;    
+    -fx-font-family: 'Patrick Hand', 'Comic Sans MS', cursive; 
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+}
+
+/* Fondo principal */
+.main-container {
+    -fx-background-color: -fx-accent-blue;
+    -fx-padding: 50px;
+}
+
+/* Panel central de login/registro */
+.login-panel {
+    -fx-background-color: -fx-panel-gray;
+    -fx-background-radius: 15px; 
+    -fx-border-radius: 15px;
+    -fx-border-color: #bbbbbb; 
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5); 
+}
+
+/* Cabecera */
+.header-bar {
+    -fx-background-color: -fx-header-dark;
+    -fx-background-radius: 15px 15px 0 0; 
+    -fx-padding: 15px;
+    -fx-alignment: center;
+}
+
+.title-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+/* Campos de texto */
+.text-field, .password-field {
+    -fx-background-color: white;
+    -fx-padding: 10px;
+    -fx-border-color: #333333;
+    -fx-border-width: 1px 1px 2px 1px; 
+    -fx-font-family: -fx-font-family; 
+}
+
+/* Etiquetas generales */
+.label {
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+}
+
+/* Botón de color gris*/
+.button-register {
+    -fx-background-color: -fx-button-gray;
+    -fx-text-fill: black;
+    -fx-background-radius: 5px;
+    -fx-border-color: #444444; 
+    -fx-border-width: 1px;
+    -fx-padding: 10px 20px;
+    -fx-cursor: hand;
+}
+
+/* Botón de color verde */
+.button-confirm {
+    -fx-background-color: -fx-button-green;
+    -fx-text-fill: white; 
+    -fx-background-radius: 5px;
+    -fx-border-color: #0d5a2d; 
+    -fx-border-width: 1px;
+    -fx-padding: 10px 20px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.link-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #444444;
+    -fx-cursor: hand;
+}
+
+.link-label:hover {
+    -fx-underline: true;
+    -fx-text-fill: black;
+}
+
+.mensaje-error {
+    -fx-text-fill: #dc2626; 
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.mensaje-exito {
+    -fx-text-fill: #16a34a; 
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}

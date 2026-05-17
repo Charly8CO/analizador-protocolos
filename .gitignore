@@ -1,0 +1,12 @@
+# Archivos de compilación de Java
+*.class
+
+# Carpetas de Maven (Autogeneradas)
+target/
+
+# Archivos de configuración locales del IDE
+.vscode/
+
+# Archivos de Base de Datos (Seguridad)
+*.db
+*.sqlite
