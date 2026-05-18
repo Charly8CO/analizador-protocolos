@@ -9,7 +9,7 @@ Este proyecto aplica un diseño basado en el patrón arquitectónico **Modelo-Vi
 
 ## 🚀 Características Principales
 
-* **Análisis Léxico y Sintáctico:** Compilación e interpretación de especificaciones de protocolos de red a partir de archivos de texto plano.
+* **Análisis Léxico y Sintáctico:** Compilación e interpretación de especificaciones de protocolos a partir de archivos de texto plano.
 * **Motor de Análisis Avanzado:** Módulos de evaluación independientes para verificar la seguridad del intercambio de mensajes frente a ataques clásicos distribuidos.
 * **Persistencia Altamente Segura:** Base de datos relacional local embebida (**SQLite**) con integridad referencial estricta mediante claves foráneas activas y borrado en cascada automatizado (`ON DELETE CASCADE`).
 * **Criptografía de Contraseñas:** Protección absoluta de las credenciales de usuario mediante la función hash criptográfica unidireccional **BCrypt**, incorporando un *salt* aleatorio automático por registro para mitigar ataques de fuerza bruta.
