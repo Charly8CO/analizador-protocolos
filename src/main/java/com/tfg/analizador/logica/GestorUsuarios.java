@@ -30,4 +30,21 @@ public class GestorUsuarios {
             }
         }
     }
+
+    public Usuario autenticarUsuario(String email, String contraPlana) throws Exception{
+
+        GestorBBDD gestor = new GestorBBDD();
+
+        //Obtenemos usuario
+        Usuario usuarioBD = gestor.obtenerUsuarioEmail(email);
+
+        // Se comprueba que el usuario esté registrado
+        if(usuarioBD == null) throw new Exception("El usuario no está registrado");
+
+        //Se comprueba que los hashes sean iguales
+        if(!BCrypt.checkpw(contraPlana, usuarioBD.getHashPass())) throw new Exception("La contraseña es incorrecta");
+
+        return usuarioBD;
+
+    }
 }

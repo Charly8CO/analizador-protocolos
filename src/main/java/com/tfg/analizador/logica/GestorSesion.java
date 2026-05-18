@@ -4,24 +4,32 @@ import com.tfg.analizador.modelo.Usuario;
 
 public class GestorSesion {
 
-	private Usuario usuarioActivo;
+    private static GestorSesion instancia;
+    private Usuario usuarioActivo;
 
-	/**
-	 * 
-	 * @param u
-	 */
-	public void iniciarSesion(Usuario u) {
-		// TODO - implement GestorSesion.iniciarSesion
-		throw new UnsupportedOperationException();
-	}
+    // Constructor privado para impedir instanciaciones externas descontroladas
+    private GestorSesion() {}
 
-	public void cerrarSesion() {
-		// TODO - implement GestorSesion.cerrarSesion
-		throw new UnsupportedOperationException();
-	}
+    public static GestorSesion getInstancia() {
+        if (instancia == null) {
+            instancia = new GestorSesion();
+        }
+        return instancia;
+    }
 
-	public Usuario getUsuarioActivo() {
-		return this.usuarioActivo;
-	}
+    public void iniciarSesion(Usuario u) {
+        this.usuarioActivo = u;
+        System.out.println("Sesión global inicializada para: " + u.getNombreUsuario());
+    }
 
+    public void cerrarSesion() {
+        if (usuarioActivo != null) {
+            System.out.println("Cerrando sesión de: " + usuarioActivo.getNombreUsuario());
+            this.usuarioActivo = null;
+        }
+    }
+
+    public Usuario getUsuarioActivo() {
+        return this.usuarioActivo;
+    }
 }

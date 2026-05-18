@@ -36,6 +36,13 @@
                      </VBox.margin>
                   </Label>
                   <PasswordField fx:id="txtPass" promptText ="***********" styleClass="password-field" />
+
+                  <VBox alignment="CENTER">
+                     <VBox.margin><Insets top="15.0" /></VBox.margin>
+                     <children>
+                        <Label fx:id="lblError" styleClass="mensaje-error" text="" />
+                     </children>
+                  </VBox>
                   
                   <HBox alignment="CENTER_RIGHT" spacing="15.0">
                      <VBox.margin>

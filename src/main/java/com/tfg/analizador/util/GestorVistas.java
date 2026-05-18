@@ -25,6 +25,10 @@ public class GestorVistas {
         cambiarEscena("/com/tfg/analizador/VistaRegistro.fxml", "TFG - Registrar cuenta");
     }
 
+    public static void irADashB(){
+        cambiarEscena("/com/tfg/analizador/VistaDashBoard.fxml", "TFG - DashBoard");
+    }
+
     private static void cambiarEscena(String rutaFXML, String titulo) {
         
         if (escenarioPrincipal == null) {

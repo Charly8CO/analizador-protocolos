@@ -106,6 +106,38 @@ public class GestorBBDD {
 			
 	}
 
+
+	/**
+	 * 
+	 * @param email
+	 */
+	public Usuario obtenerUsuarioEmail(String email) throws SQLException{
+
+		String sql = "SELECT * FROM USUARIO WHERE nombre_usuario = ?";
+
+		try(java.sql.PreparedStatement stmt = getConexion().prepareStatement(sql)){
+
+			stmt.setString(1, email);
+
+			try(java.sql.ResultSet rs = stmt.executeQuery()){
+
+				if (rs.next()) {
+					Usuario u = new Usuario();
+					u.setIdUsuario(rs.getInt("id_usuario"));
+					u.setNombreUsuario(rs.getString("nombre_usuario"));
+					u.setHashPass(rs.getString("hash_contra"));
+					return u;
+				}
+
+			}
+
+		}
+
+		//Cuando el usuario no existe
+		return null;
+
+	}
+
 	/**
 	 * 
 	 * @param nombre
