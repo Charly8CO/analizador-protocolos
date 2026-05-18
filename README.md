@@ -125,7 +125,7 @@ Lanza la aplicación de escritorio:
 ./mvnw javafx:run
 ```
 
-##🎓 Autoría y Créditos
+## 🎓 Autoría y Créditos
 Autor: Carlos Corbacho Ordóñez
 
 Tutor: Francisco Jose Jaime Rodríguez
