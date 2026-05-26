@@ -8,7 +8,7 @@
     <menus>
         <Menu text="Archivos">
             <items>
-                <MenuItem text="Nuevo Análisis" />
+                <MenuItem text="Nuevo protocolo" onAction="#handleNuevoProtocolo" />
                 <MenuItem text="Historial de Protocolos" />
             </items>
         </Menu>

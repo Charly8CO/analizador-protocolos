@@ -7,15 +7,19 @@
     -fx-font-family: 'Patrick Hand', 'Comic Sans MS', cursive; 
     -fx-font-size: 16px;
     -fx-text-fill: black;
+    -fx-border-dark: #2C3E50;
+    -fx-bg-light: #EAECEE;
+    -fx-bg-white: #FFFFFF;
+    -fx-green-action: #009900;
+    -fx-green-header: #117A65;
 }
 
-/* Fondo principal */
+/* --- VISTAS DE LOGIN Y REGISTRO --- */
 .main-container {
     -fx-background-color: -fx-accent-blue;
     -fx-padding: 50px;
 }
 
-/* Panel central de login/registro */
 .login-panel {
     -fx-background-color: -fx-panel-gray;
     -fx-background-radius: 15px; 
@@ -25,7 +29,6 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5); 
 }
 
-/* Cabecera */
 .header-bar {
     -fx-background-color: -fx-header-dark;
     -fx-background-radius: 15px 15px 0 0; 
@@ -39,7 +42,6 @@
     -fx-text-fill: black;
 }
 
-/* Campos de texto */
 .text-field, .password-field {
     -fx-background-color: white;
     -fx-padding: 10px;
@@ -48,13 +50,11 @@
     -fx-font-family: -fx-font-family; 
 }
 
-/* Etiquetas generales */
 .label {
     -fx-font-size: 16px;
     -fx-text-fill: black;
 }
 
-/* Botón de color gris*/
 .button-register {
     -fx-background-color: -fx-button-gray;
     -fx-text-fill: black;
@@ -65,7 +65,6 @@
     -fx-cursor: hand;
 }
 
-/* Botón de color verde */
 .button-confirm {
     -fx-background-color: -fx-button-green;
     -fx-text-fill: white; 
@@ -111,4 +110,96 @@
 
 .boton-peligro:hover {
     -fx-background-color: #ff0000;
+}
+
+/* --- ESTILOS DEL ANALIZADOR Y DASHBOARD --- */
+.dashboard-container {
+    -fx-background-color: -fx-accent-blue;
+}
+
+.analizador-container {
+    -fx-background-color: -fx-bg-light;
+}
+
+.panel-lateral-izq {
+    -fx-background-color: #F8F9F9;
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 0 1 0 0;
+}
+
+.panel-lateral-der {
+    -fx-background-color: -fx-bg-white;
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 0 0 0 1;
+}
+
+.panel-central-blanco {
+    -fx-background-color: -fx-bg-white;
+}
+
+.cabecera-analizador {
+    -fx-background-color: -fx-green-header;
+    -fx-text-fill: white;
+}
+
+.cabecera-seccion {
+    -fx-background-color: #E5E8E8;
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 0 0 1 0;
+}
+
+.boton-herramienta {
+    -fx-background-color: transparent;
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 0 0 1 0;
+    -fx-cursor: hand;
+}
+.boton-herramienta:hover {
+    -fx-background-color: #E5E8E8;
+}
+
+.boton-accion-verde {
+    -fx-background-color: -fx-green-action;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+.boton-accion-verde:hover {
+    -fx-background-color: #007700;
+}
+
+.boton-borde-arriba {
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 1 0 0 0;
+}
+
+.lista-sin-borde {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.tabla-sin-borde {
+    -fx-border-width: 0;
+}
+
+/* --- ESTILOS DE TARJETAS (DASHBOARD) --- */
+.panel-tarjeta {
+    -fx-background-color: -fx-bg-white;
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 2;
+}
+
+.panel-tarjeta-clara {
+    -fx-background-color: #F4F6F6;
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 2;
+}
+
+.borde-oscuro-2px {
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 2;
+}
+
+.tabla-con-borde {
+    -fx-border-color: -fx-border-dark;
+    -fx-border-width: 1;
 }

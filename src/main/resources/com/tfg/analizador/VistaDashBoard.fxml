@@ -10,8 +10,7 @@
 <?import javafx.scene.shape.Ellipse?>
 <?import javafx.scene.text.Font?>
 
-<!-- Dimensiones actualizadas a 1277x711 para coincidir con VistaLogin -->
-<BorderPane prefHeight="711.0" prefWidth="1277.0" style="-fx-background-color: #5DADE2;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tfg.analizador.presentacion.ControladorPrincipal">
+<BorderPane prefHeight="711.0" prefWidth="1277.0" styleClass="dashboard-container" stylesheets="@EstilosVistas.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tfg.analizador.presentacion.ControladorPrincipal">
 
       <top>
         <fx:include source="MenuSuperior.fxml" />
@@ -23,12 +22,12 @@
                   <Insets bottom="30.0" left="30.0" right="30.0" top="10.0" />
                </padding>
 
-               <VBox spacing="20.0" style="-fx-background-color: white; -fx-border-color: #2C3E50; -fx-border-width: 2;" HBox.hgrow="ALWAYS">
+               <VBox spacing="20.0" styleClass="panel-tarjeta" HBox.hgrow="ALWAYS">
                   <padding>
                      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                   </padding>
 
-                  <VBox spacing="15.0" style="-fx-border-color: #2C3E50; -fx-border-width: 2;">
+                  <VBox spacing="15.0" styleClass="borde-oscuro-2px">
                      <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                      </padding>
@@ -40,7 +39,7 @@
                      <Label text="Estadística extra..." />
                   </VBox>
 
-                  <VBox spacing="20.0" style="-fx-border-color: #2C3E50; -fx-border-width: 2;" VBox.vgrow="ALWAYS">
+                  <VBox spacing="20.0" styleClass="borde-oscuro-2px" VBox.vgrow="ALWAYS">
                      <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                      </padding>
@@ -49,10 +48,10 @@
                      </Label>
                      
                      <HBox spacing="30.0" alignment="CENTER" VBox.vgrow="ALWAYS">
-                           <VBox alignment="CENTER" prefWidth="150" prefHeight="100" style="-fx-border-color: #2C3E50; -fx-border-width: 2;">
+                           <VBox alignment="CENTER" prefWidth="150" prefHeight="100" styleClass="borde-oscuro-2px">
                               <Label text="Grafico1" />
                            </VBox>
-                           <VBox alignment="CENTER" prefWidth="150" prefHeight="100" style="-fx-border-color: #2C3E50; -fx-border-width: 2;">
+                           <VBox alignment="CENTER" prefWidth="150" prefHeight="100" styleClass="borde-oscuro-2px">
                               <Label text="Grafico2" />
                            </VBox>
                      </HBox>
@@ -63,9 +62,9 @@
                   
                   <VBox alignment="CENTER">
                      <Ellipse fill="WHITE" radiusX="120.0" radiusY="80.0" stroke="#2c3e50" strokeWidth="2.0" />
-                     </VBox>
+                  </VBox>
 
-                  <VBox spacing="10.0" style="-fx-background-color: #F4F6F6; -fx-border-color: #2C3E50; -fx-border-width: 2;" VBox.vgrow="ALWAYS">
+                  <VBox spacing="10.0" styleClass="panel-tarjeta-clara" VBox.vgrow="ALWAYS">
                      <padding>
                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </padding>
@@ -73,7 +72,7 @@
                            <font><Font name="System Bold" size="14.0" /></font>
                      </Label>
                      
-                     <TableView fx:id="tablaProtocolos" VBox.vgrow="ALWAYS" style="-fx-border-color: #2C3E50; -fx-border-width: 1;">
+                     <TableView fx:id="tablaProtocolos" VBox.vgrow="ALWAYS" styleClass="tabla-con-borde">
                            <columns>
                               <TableColumn fx:id="colNombre" prefWidth="250.0" text="Nombre del Protocolo" />
                               <TableColumn fx:id="colAcciones" prefWidth="200.0" text="Acciones" />
