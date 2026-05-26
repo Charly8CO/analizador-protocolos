@@ -5,38 +5,53 @@ import java.util.Date;
 import java.util.List;
 
 public class Protocolo {
+    private int idProtocolo;
+    private String nombreProtocolo;
+    private Date fechaAnalisis;
+    private boolean seguro;
+    
+    // Contenedores de datos
+    private List<Mensaje> mensajes;
+    private List<Agente> agentes;
+    private List<Vulnerabilidad> vulnerabilidades;
 
-	private int idProtocolo;
-	private String nombreProtocolo;
-	private Date fechaAnalisis;
-	private boolean seguro;
-	private List<Mensaje> mensajes = new ArrayList<>();
+    public Protocolo(String nombreProtocolo) {
+        this.nombreProtocolo = nombreProtocolo;
+        this.fechaAnalisis = new Date();
+        this.seguro = true; // Asumimos que es seguro al nacer
+        this.mensajes = new ArrayList<>();
+        this.agentes = new ArrayList<>();
+        this.vulnerabilidades = new ArrayList<>();
+    }
 
-	/**
-	 * 
-	 * @param m
-	 */
-	public void anadirLinea(Mensaje m) {
-		// TODO - implement Protocolo.anadirLinea
-		throw new UnsupportedOperationException();
-	}
+    public void anadirLinea(Mensaje m) {
+        this.mensajes.add(m);
+    }
 
-	/**
-	 * 
-	 * @param a
-	 */
-	public void anadirAgente(Agente a) {
-		// TODO - implement Protocolo.anadirAgente
-		throw new UnsupportedOperationException();
-	}
+    public void anadirAgente(Agente a) {
+        // Gracias a que programamos el equals(), esto no añadirá duplicados
+        if (!this.agentes.contains(a)) {
+            this.agentes.add(a);
+        }
+    }
 
-	/**
-	 * 
-	 * @param v
-	 */
-	public void registrarVulnerabilidad(Vulnerabilidad v) {
-		// TODO - implement Protocolo.registrarVulnerabilidad
-		throw new UnsupportedOperationException();
-	}
+    public void registrarVulnerabilidad(Vulnerabilidad v) {
+        this.vulnerabilidades.add(v);
+        this.seguro = false; // Al registrar la primera vulnerabilidad, deja de ser seguro
+    }
 
+    // Getters
+    public int getIdProtocolo() { return idProtocolo; }
+    public String getNombreProtocolo() { return nombreProtocolo; }
+    public Date getFechaAnalisis() { return fechaAnalisis; }
+    public boolean isSeguro() { return seguro; }
+    public List<Mensaje> getMensajes() { return mensajes; }
+    public List<Agente> getAgentes() { return agentes; }
+    public List<Vulnerabilidad> getVulnerabilidades() { return vulnerabilidades; }
+
+    // Setters
+    public void setIdProtocolo(int idProtocolo) { this.idProtocolo = idProtocolo; }
+    public void setNombreProtocolo(String nombreProtocolo) { this.nombreProtocolo = nombreProtocolo; }
+    public void setFechaAnalisis(Date fechaAnalisis) { this.fechaAnalisis = fechaAnalisis; }
+    public void setSeguro(boolean seguro) { this.seguro = seguro; }
 }

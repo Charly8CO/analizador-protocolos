@@ -15,18 +15,12 @@ public class GestorBBDD {
     //URL de la base de datos
     private static final String URL = "jdbc:sqlite:analisis.db?foreign_keys=on";
 
-    //establecer conexión y devolverla para que se pueda usar
-    public static Connection getConexion() {
-        try {
-            // si no existe o si se ha cerrado previamente
-            if (conexion == null || conexion.isClosed()) {
-                conexion = DriverManager.getConnection(URL);
-                System.out.println("Se ha establecido conexión con la base de datos");
-            }
-        } catch (SQLException e) {
-            System.err.println("No se ha podido establecer conexión con la base de datos: " + e.getMessage());
+    //E stablecer conexión y devolverla para que se pueda usar
+   	public static Connection getConexion() throws SQLException {
+        if (conexion == null || conexion.isClosed()) {
+            conexion = DriverManager.getConnection(URL);
+            System.out.println("Se ha establecido conexión con la base de datos");
         }
-
         return conexion;
     }
 
