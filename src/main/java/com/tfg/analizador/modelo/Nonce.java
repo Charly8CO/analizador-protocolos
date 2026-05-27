@@ -1,6 +1,6 @@
 package com.tfg.analizador.modelo;
 
-public class Nonce {
+public class Nonce implements  ElementoMensaje{
     private String identificador;
     private Agente creador;
     private boolean esFresco;
@@ -11,6 +11,7 @@ public class Nonce {
         this.esFresco = true; 
     }
 
+	@Override
     public String getIdentificador() { return identificador; }
     public void setIdentificador(String identificador) { this.identificador = identificador; }
 

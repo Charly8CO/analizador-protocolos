@@ -6,6 +6,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
+import com.tfg.analizador.logica.AnalizadorLexico;
 import com.tfg.analizador.util.GestorDialogos;
 
 import javafx.event.ActionEvent;
@@ -68,5 +69,44 @@ public class ControladorAnalisis {
                 listaActores.getItems().add(nombre);
             }
         });
+    }
+
+    @FXML
+    void handleValidarSintaxis(ActionEvent event) {
+        // Extraemos el texto plano del editor avanzado
+        String textoUsuario = editorProtocolo.getText();
+
+        if (textoUsuario.trim().isEmpty()) {
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "Escribe un protocolo antes de validar.", "Aceptar");
+            return;
+        }
+
+        AnalizadorLexico analizador = new AnalizadorLexico();
+        
+        try {
+            // Se envía el texto, si hay error salta el catch
+            // Si funciona, nos devuelve el objeto Protocolo estructurado.
+            com.tfg.analizador.modelo.Protocolo protocolo = analizador.compilarProtocolo("Protocolo_En_Pantalla", textoUsuario);
+
+            // Limpiamos la lista visual y la rellenamos con los actores detectados
+            //listaActores.getItems().clear();
+
+            //KDC es obligatorio, este if se asegura que cada vez que pulsemos el botón de validar no se vuelva a meter el KDC
+            if (!listaActores.getItems().contains("KDC")) {
+                listaActores.getItems().add("KDC"); 
+            }
+            
+            // Los actores del texto se añaden si no existen
+            for (com.tfg.analizador.modelo.Agente agente : protocolo.getAgentes()) {
+                if (!listaActores.getItems().contains(agente.getNombre())) {
+                    listaActores.getItems().add(agente.getNombre());
+                }
+            }
+
+            GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Sintaxis Correcta", "El protocolo tiene la estructura correcta y los actores han sido cargados.", "Aceptar");
+        } catch (IllegalArgumentException e) {
+            // Mostramos la excepción al usuario
+            GestorDialogos.mostrarConfirmacionEstandar("Error de Sintaxis", "Problema detectado", e.getMessage(), "Aceptar");
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.tfg.analizador.modelo;
 
 import java.util.Objects;
 
-public class Agente {
+public class Agente implements ElementoMensaje{
     private String nombre;
     private String rol;
 
@@ -29,5 +29,10 @@ public class Agente {
     @Override
     public int hashCode() {
         return Objects.hash(nombre);
+    }
+
+    @Override
+    public String getIdentificador() {
+        return this.nombre;
     }
 }
