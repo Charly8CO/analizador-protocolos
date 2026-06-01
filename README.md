@@ -53,7 +53,7 @@ Registra las cuentas con restricción de unicidad estricta para evitar duplicida
 | Columna | Tipo | Restricciones |
 | :--- | :--- | :--- |
 | `id_usuario` | INTEGER | Primary Key, Autoincrement |
-| `nombre_usuario` | TEXT | UNIQUE, Not Null |
+| `correo_usuario` | TEXT | UNIQUE, Not Null |
 | `hash_contra` | TEXT | Not Null |
 
 ### 2. Tabla `PROTOCOLO`
