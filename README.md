@@ -53,7 +53,7 @@ Registra las cuentas con restricción de unicidad estricta para evitar duplicida
 | Columna | Tipo | Restricciones |
 | :--- | :--- | :--- |
 | `id_usuario` | INTEGER | Primary Key, Autoincrement |
-| `nombre_usuario` | TEXT | UNIQUE, Not Null |
+| `correo_usuario` | TEXT | UNIQUE, Not Null |
 | `hash_contra` | TEXT | Not Null |
 
 ### 2. Tabla `PROTOCOLO`
@@ -66,7 +66,7 @@ Almacena el historial de especificaciones cargadas por cada usuario.
 | `nombre_protocolo`| TEXT | Not Null |
 | `fecha_analisis` | TEXT | Nullable |
 | `es_seguro` | INTEGER | Nullable |
-| `Path` | TEXT | Not Null |
+| `ruta_archivo` | TEXT | Not Null |
 
 ### 3. Tabla `VULNERABILIDAD`
 Registra detalladamente cada fallo de seguridad detectado.
