@@ -66,7 +66,7 @@ Almacena el historial de especificaciones cargadas por cada usuario.
 | `nombre_protocolo`| TEXT | Not Null |
 | `fecha_analisis` | TEXT | Nullable |
 | `es_seguro` | INTEGER | Nullable |
-| `Path` | TEXT | Not Null |
+| `ruta_archivo` | TEXT | Not Null |
 
 ### 3. Tabla `VULNERABILIDAD`
 Registra detalladamente cada fallo de seguridad detectado.
