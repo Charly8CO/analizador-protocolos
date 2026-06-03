@@ -10,3 +10,4 @@ target/
 # Archivos de Base de Datos (Seguridad)
 *.db
 *.sqlite
+MainPrueba.java
