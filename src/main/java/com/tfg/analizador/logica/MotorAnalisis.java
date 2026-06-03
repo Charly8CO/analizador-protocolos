@@ -62,9 +62,80 @@ public class MotorAnalisis {
         }
     }
 
-    public List<Vulnerabilidad> evaluarDesafioRespuesta(Protocolo p) {
-        // TODO: Implementar lógica de desafío-respuesta
-        return new ArrayList<>();
+	public List<Vulnerabilidad> evaluarDesafioRespuesta(Protocolo p) {
+        List<Vulnerabilidad> vulnerabilidades = new ArrayList<>();
+        
+        // Clase interna auxiliar para rastrear el estado de cada desafío en la sesión
+        class Desafio {
+            String idNonce;
+            String emisorOriginal;
+            String receptorEsperado;
+            boolean respondido = false;
+            int lineaDesafio;
+
+            Desafio(String id, String emisor, String receptor, int linea) {
+                this.idNonce = id;
+                this.emisorOriginal = emisor;
+                this.receptorEsperado = receptor;
+                this.lineaDesafio = linea;
+            }
+        }
+        
+        List<Desafio> desafiosActivos = new ArrayList<>();
+
+        for (Mensaje m : p.getMensajes()) {
+            List<Nonce> noncesEnMensaje = new ArrayList<>();
+            // Usamos el método recursivo que ya creamos para sacar los nonces
+            for (ElementoMensaje elemento : m.getComponentes()) {
+                extraerNoncesRecursivo(elemento, noncesEnMensaje);
+            }
+
+            for (Nonce n : noncesEnMensaje) {
+                boolean esRespuesta = false;
+                
+                // Comprobamos si el nonce actual está respondiendo a un desafío pendiente
+                for (Desafio d : desafiosActivos) {
+                    if (d.idNonce.equals(n.getIdentificador())) {
+                        // El que responde debe coincidir con el receptor del mensaje qeu enviaba el nonce
+                        if (m.getEmisor().getNombre().equals(d.receptorEsperado) && 
+                            m.getReceptor().getNombre().equals(d.emisorOriginal)) {
+                            d.respondido = true;
+                            esRespuesta = true;
+                        }
+                    }
+                }
+
+                // Si el nonce no es respuesta a nada, es un desafío nuevo que se lanza
+                if (!esRespuesta) {
+
+                    boolean yaExiste = desafiosActivos.stream()
+                        .anyMatch(d -> d.idNonce.equals(n.getIdentificador()));
+                    
+                    if (!yaExiste) {
+                        desafiosActivos.add(new Desafio(
+                            n.getIdentificador(), 
+                            m.getEmisor().getNombre(), 
+                            m.getReceptor().getNombre(), 
+                            m.getNumeroLinea()
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Miramos si faltan respuestas
+        for (Desafio d : desafiosActivos) {
+            if (!d.respondido) {
+                Vulnerabilidad vuln = new Vulnerabilidad(
+                    "Fallo de Desafío-Respuesta",
+                    d.lineaDesafio,
+                    "El agente " + d.emisorOriginal + " envió el nonce " + d.idNonce + " a " + d.receptorEsperado + ", pero nunca recibió una respuesta válida de vuelta."
+                );
+                vulnerabilidades.add(vuln);
+                p.registrarVulnerabilidad(vuln);
+            }
+        }
+        return vulnerabilidades;
     }
 
     public List<Vulnerabilidad> evaluarSuplantaciOn(Protocolo p) {
