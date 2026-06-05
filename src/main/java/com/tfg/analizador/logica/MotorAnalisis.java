@@ -123,16 +123,27 @@ public class MotorAnalisis {
             }
         }
 
-        // Miramos si faltan respuestas
-        for (Desafio d : desafiosActivos) {
-            if (!d.respondido) {
-                Vulnerabilidad vuln = new Vulnerabilidad(
-                    "Fallo de Desafío-Respuesta",
-                    d.lineaDesafio,
-                    "El agente " + d.emisorOriginal + " envió el nonce " + d.idNonce + " a " + d.receptorEsperado + ", pero nunca recibió una respuesta válida de vuelta."
-                );
-                vulnerabilidades.add(vuln);
-                p.registrarVulnerabilidad(vuln);
+        if (desafiosActivos.isEmpty()) {
+            // Si la lista está vacía, es que no hay ni un solo Nonce en todo el protocolo
+            Vulnerabilidad advertencia = new Vulnerabilidad(
+                "Advertencia Estructural (Falta de Desafío-Respuesta)",
+                0,
+                "El protocolo no implementa ningún mecanismo de desafío-respuesta (no se han detectado Nonces). Esto lo hace altamente susceptible a ataques de repetición."
+            );
+            vulnerabilidades.add(advertencia);
+            p.registrarVulnerabilidad(advertencia);
+        } else {
+            // Cuando se encuentran, comprobamos cuáles no fueron respondidos
+            for (Desafio d : desafiosActivos) {
+                if (!d.respondido) {
+                    Vulnerabilidad vuln = new Vulnerabilidad(
+                        "Fallo de Desafío-Respuesta",
+                        d.lineaDesafio,
+                        "El agente " + d.emisorOriginal + " envió el nonce " + d.idNonce + " a " + d.receptorEsperado + ", pero nunca recibió una respuesta válida de vuelta."
+                    );
+                    vulnerabilidades.add(vuln);
+                    p.registrarVulnerabilidad(vuln);
+                }
             }
         }
         return vulnerabilidades;
