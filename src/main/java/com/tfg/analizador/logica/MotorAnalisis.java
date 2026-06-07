@@ -33,12 +33,18 @@ public class MotorAnalisis {
 
             // Evaluamos la propiedad de frescura (Freshness)
             for (Nonce n : noncesEnMensaje) {
-                if (!creadoresNonces.containsKey(n.getIdentificador())) {
+                
+                // Extraemos la base del nonce eliminando operaciones matemáticas.
+                String idOriginal = n.getIdentificador();
+                String baseNonce = idOriginal.split("[\\+\\-]", 2)[0].trim();
+                boolean tieneOperacion = !baseNonce.equals(idOriginal.trim());
+
+                if (!creadoresNonces.containsKey(baseNonce)) {
                     // Es la primera vez que vemos el Nonce. El emisor actual es su creador legítimo.
-                    creadoresNonces.put(n.getIdentificador(), m.getEmisor().getNombre());
+                    creadoresNonces.put(baseNonce, m.getEmisor().getNombre());
                 } else {
                     // El Nonce ya existe. ¿Lo está reenviando otro agente o lo reutiliza el creador?
-                    String creadorOriginal = creadoresNonces.get(n.getIdentificador());
+                    String creadorOriginal = creadoresNonces.get(baseNonce);
                     
                     // Si el creador original vuelve a inyectar el MISMO nonce como si fuera nuevo
                     // en un paso posterior, viola la regla de "Number Used ONCE"
@@ -46,21 +52,28 @@ public class MotorAnalisis {
                         Vulnerabilidad vuln = new Vulnerabilidad(
                             "Fallo de Frescura (Reutilización de Nonce)", 
                             m.getNumeroLinea(), 
-                            "El agente " + creadorOriginal + " ha reutilizado el identificador " + n.getIdentificador() + " que ya había generado previamente. Esto compromete la frescura al violar la regla de un solo uso."
+                            "El agente " + creadorOriginal + " ha reutilizado el identificador base " + baseNonce + " que ya había generado previamente. Esto compromete la frescura al violar la regla de un solo uso."
                         );
                         vulnerabilidades.add(vuln);
                         p.registrarVulnerabilidad(vuln);
                     } else {
-                        
-                        // Si un agente distinto devuelve el nonce intacto, alertamos de que 
-                        // el protocolo no está usando una función protectora (ej. N-1).
-                        Vulnerabilidad vuln = new Vulnerabilidad(
-                            "Falta de Asimetría (Riesgo de Reflexión)", 
-                            m.getNumeroLinea(), 
-                            "El agente " + m.getEmisor().getNombre() + " reenvía el nonce " + n.getIdentificador() + " intacto. Debería aplicarse una función algorítmica (ej. " + n.getIdentificador() + "-1) para evitar ataques de reflexión o espejo."
-                        );
-                        vulnerabilidades.add(vuln);
-                        p.registrarVulnerabilidad(vuln);
+                        // Verificamos si el emisor es un Servidor de Confianza.
+                        //Este no necesita aplicar funciones algorítmicas por el diseño de sus tickets. 
+                        // Solo exigimos la función asimétrica en canales simétricos directos.
+                        String nombreEmisor = m.getEmisor().getNombre();
+                        boolean esServidorConfianza = nombreEmisor.equalsIgnoreCase("KDC") || 
+                                                      nombreEmisor.equalsIgnoreCase("S") || 
+                                                      nombreEmisor.equalsIgnoreCase("T");
+
+                        if (!tieneOperacion && !esServidorConfianza) {
+                            Vulnerabilidad vuln = new Vulnerabilidad(
+                                "Falta de Asimetría (Riesgo de Reflexión)", 
+                                m.getNumeroLinea(), 
+                                "El agente " + nombreEmisor + " reenvía el nonce " + baseNonce + " intacto. Debería aplicarse una función algorítmica (ej. " + baseNonce + "-1) para evitar ataques de reflexión o espejo."
+                            );
+                            vulnerabilidades.add(vuln);
+                            p.registrarVulnerabilidad(vuln);
+                        }
                     }
                 }
             }
@@ -105,12 +118,17 @@ public class MotorAnalisis {
             }
 
             for (Nonce n : noncesEnMensaje) {
+                // Extraemos la base para ignorar el "-1" o "+1" al buscar coincidencias en la memoria
+                String baseNonce = n.getIdentificador().split("[\\+\\-]", 2)[0].trim();
                 boolean esRespuesta = false;
                 
                 for (Desafio d : desafiosActivos) {
-                    if (d.idNonce.equals(n.getIdentificador())) {
+                    if (d.idNonce.equals(baseNonce)) {
                         
                         // Mantenemos la flexibilización de protocolos de tres partes (KDC).
+                        // Ya no exigimos que el que responda sea el "receptorEsperado" original.
+                        // Basta con que el mensaje actual tenga como receptor al creador original 
+                        // del Nonce. Si el creador lo recibe de vuelta, el desafío está superado.
                         if (m.getReceptor().getNombre().equals(d.emisorOriginal)) {
                             d.respondido = true;
                             esRespuesta = true;
@@ -120,11 +138,11 @@ public class MotorAnalisis {
 
                 if (!esRespuesta) {
                     boolean yaExiste = desafiosActivos.stream()
-                        .anyMatch(d -> d.idNonce.equals(n.getIdentificador()));
+                        .anyMatch(d -> d.idNonce.equals(baseNonce));
                     
                     if (!yaExiste) {
                         desafiosActivos.add(new Desafio(
-                            n.getIdentificador(), m.getEmisor().getNombre(), 
+                            baseNonce, m.getEmisor().getNombre(), 
                             m.getReceptor().getNombre(), m.getNumeroLinea()
                         ));
                     }
