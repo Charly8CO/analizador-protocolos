@@ -1,6 +1,10 @@
 package com.tfg.analizador.logica;
 
+import java.io.File;
+import java.nio.file.Files;
+
 import com.tfg.analizador.modelo.Protocolo;
+import com.tfg.analizador.modelo.Usuario;
 
 public class ServicioAnalisis {
     
@@ -8,12 +12,29 @@ public class ServicioAnalisis {
         AnalizadorLexico analizador = new AnalizadorLexico();
         MotorAnalisis motor = new MotorAnalisis();
         
-        // Validar y compilar
-        Protocolo p = analizador.compilarProtocolo("Protocolo_Temporal", textoPlano);
+        // Compilación 
+        Protocolo p = analizador.compilarProtocolo("Análisis_Actual", textoPlano);
         
-        // Analizar vulnerabilidades 
-        // motor.evaluarDesafioRespuesta(p);
+        // Analizar
+        motor.analizarEsSeguro(p);
         
         return p;
     }
+
+    public void guardarProtocolo(File archivo, String contenido) throws Exception {
+        // Guardado en local
+        Files.writeString(archivo.toPath(), contenido);
+
+        // Registro en la base de datos 
+        // Obtenemos el usuario de la sesión actual
+        Usuario usuarioActivo = GestorSesion.getInstancia().getUsuarioActivo();
+        
+        if (usuarioActivo != null) {
+            // Simulamos el guardado en BBDD (esto conectará con tu GestorBBDD próximamente)
+            System.out.println("Registrando en SQLite: " + archivo.getName() + " para el usuario " + usuarioActivo.getNombreUsuario());
+            
+            // Aquí iría: GestorBBDD.insertarProtocolo(usuarioActivo.getId(), archivo.getName(), archivo.getAbsolutePath());
+        }
+    }
+    
 }

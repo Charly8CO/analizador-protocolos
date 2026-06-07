@@ -1,5 +1,6 @@
 package com.tfg.analizador.presentacion;
 
+import java.io.File;
 import java.util.Optional;
 
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -8,14 +9,21 @@ import org.fxmisc.richtext.LineNumberFactory;
 
 import com.tfg.analizador.logica.ServicioAnalisis;
 import com.tfg.analizador.modelo.Protocolo;
+import com.tfg.analizador.modelo.Vulnerabilidad;
 import com.tfg.analizador.util.GestorDialogos;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory; 
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 
 public class ControladorAnalisis {
 
@@ -26,16 +34,16 @@ public class ControladorAnalisis {
     private ListView<String> listaActores;
 
     @FXML
-    private TableView<?> tablaVulnerabilidades;
+    private TableView<Vulnerabilidad> tablaVulnerabilidades;
 
     @FXML
-    private TableColumn<?, ?> colVulnNombre;
+    private TableColumn<Vulnerabilidad, String> colVulnNombre;
 
     @FXML
-    private TableColumn<?, ?> colVulnLinea;
+    private TableColumn<Vulnerabilidad, Integer> colVulnLinea;
 
     @FXML
-    private TableColumn<?, ?> colVulnDesc;
+    private TableColumn<Vulnerabilidad, String> colVulnDesc;
 
     private CodeArea editorProtocolo;
 
@@ -53,6 +61,51 @@ public class ControladorAnalisis {
         
         // Inyectamos el panel de scroll
         contenedorEditor.getChildren().add(scrollEditor);
+
+        colVulnNombre.setCellValueFactory(new PropertyValueFactory<>("tipoAtaque"));
+        colVulnLinea.setCellValueFactory(new PropertyValueFactory<>("lineaAfectada"));
+        colVulnDesc.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+
+        // Envolvemos el texto de la descripción para que salte de línea automáticamente
+        colVulnDesc.setCellFactory(tc -> {
+            TableCell<Vulnerabilidad, String> cell = new TableCell<>() {
+                private Text text = new Text();
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        text.setText(item);
+                        // Restamos unos píxeles de padding para que no se pegue al borde
+                        text.wrappingWidthProperty().bind(colVulnDesc.widthProperty().subtract(10));
+                        setGraphic(text);
+                    }
+                }
+            };
+            return cell;
+        });
+
+        colVulnNombre.setCellFactory(tc -> {
+            TableCell<Vulnerabilidad, String> cell = new TableCell<>() {
+                private Text text = new Text();
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                    } else {
+                        text.setText(item);
+                        // Restamos unos píxeles de padding para que no se pegue al borde
+                        text.wrappingWidthProperty().bind(colVulnNombre.widthProperty().subtract(10));
+                        setGraphic(text);
+                    }
+                }
+            };
+            return cell;
+        });
+
+        
     }
 
     @FXML
@@ -90,15 +143,77 @@ public class ControladorAnalisis {
             // Actualizamos la interfaz visual
             actualizarListaActores(protocoloProcesado);
             
-            GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Sintaxis Correcta", "El protocolo tiene la estructura correcta y los actores han sido cargados.", "Aceptar");
+            // Volcamos la lista de vulnerabilidades a un formato observable que JavaFX entiende
+            ObservableList<Vulnerabilidad> data = FXCollections.observableArrayList(protocoloProcesado.getVulnerabilidades());
+
+            // Al inyectar la data ahora, las columnas (gracias al PropertyValueFactory) sabrán qué mostrar
+            tablaVulnerabilidades.setItems(data);
+
+            // Mantenemos el feedback visual intacto
+            if (protocoloProcesado.isSeguro()) {
+                GestorDialogos.mostrarConfirmacionEstandar("Análisis Finalizado", "Protocolo Seguro", "No se han detectado fallos lógicos. El diseño es robusto.", "Aceptar");
+            } else {
+                GestorDialogos.mostrarConfirmacionEstandar(
+                    "Análisis Finalizado", 
+                    "Vulnerabilidades Detectadas", 
+                    "El motor ha encontrado " + protocoloProcesado.getVulnerabilidades().size() + " brechas de seguridad. Revisa la tabla lateral para más detalles.", 
+                    "Aceptar");
+            }
         } catch (Exception e) {
             // Mostramos el mensaje de la excepción
-            GestorDialogos.mostrarConfirmacionEstandar("Error", "Problema detectado", e.getMessage(), "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Error de Compilación", "Sintaxis incorrecta", e.getMessage(), "Aceptar");
+        }
+    }
+
+    @FXML
+    void handleGuardarProtocolo(ActionEvent event) {
+        String texto = editorProtocolo.getText();
+
+        if (texto.trim().isEmpty()) {
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "No hay contenido para guardar.", "Aceptar");
+            return;
+        }
+
+        // Configuramos el selector de archivos
+        FileChooser selector = new FileChooser();
+        selector.setTitle("Guardar Protocolo");
+        selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
+        
+        // Abrimos la ventana de guardado
+        File archivo = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
+
+        if (archivo != null) {
+            try {
+                ServicioAnalisis servicio = new ServicioAnalisis();
+                // Delegamos el guardado físico y en BBDD
+                servicio.guardarProtocolo(archivo, texto);
+                
+                GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Protocolo Guardado", "El archivo se ha guardado correctamente en: " + archivo.getName(), "Aceptar");
+            } catch (Exception e) {
+                GestorDialogos.mostrarConfirmacionEstandar("Error", "Error al guardar", e.getMessage(), "Aceptar");
+            }
+        }
+    }
+
+    @FXML
+    void handleLimpiarProtocolo(ActionEvent event) {
+        boolean confirmar = GestorDialogos.mostrarConfirmacionEstandar(
+            "Confirmar limpieza", 
+            "¿Vaciar editor?", 
+            "Se borrará todo el texto actual. ¿Deseas continuar?", 
+            "Limpiar"
+        );
+        
+        if (confirmar) {
+            editorProtocolo.clear();
+            listaActores.getItems().clear();
+            listaActores.getItems().add("KDC"); // Mantenemos el KDC por defecto
+            tablaVulnerabilidades.getItems().clear();
         }
     }
 
     private void actualizarListaActores(Protocolo protocolo) {
-        // KDC es obligatorio, este if se hace que no se duplique
+        // KDC es obligatorio, este if hace que no se duplique
         if (!listaActores.getItems().contains("KDC")) {
             listaActores.getItems().add("KDC"); 
         }
