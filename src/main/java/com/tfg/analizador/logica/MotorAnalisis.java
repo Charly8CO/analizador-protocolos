@@ -50,6 +50,17 @@ public class MotorAnalisis {
                         );
                         vulnerabilidades.add(vuln);
                         p.registrarVulnerabilidad(vuln);
+                    } else {
+                        
+                        // Si un agente distinto devuelve el nonce intacto, alertamos de que 
+                        // el protocolo no está usando una función protectora (ej. N-1).
+                        Vulnerabilidad vuln = new Vulnerabilidad(
+                            "Falta de Asimetría (Riesgo de Reflexión)", 
+                            m.getNumeroLinea(), 
+                            "El agente " + m.getEmisor().getNombre() + " reenvía el nonce " + n.getIdentificador() + " intacto. Debería aplicarse una función algorítmica (ej. " + n.getIdentificador() + "-1) para evitar ataques de reflexión o espejo."
+                        );
+                        vulnerabilidades.add(vuln);
+                        p.registrarVulnerabilidad(vuln);
                     }
                 }
             }
@@ -70,7 +81,6 @@ public class MotorAnalisis {
     public List<Vulnerabilidad> evaluarDesafioRespuesta(Protocolo p) {
         List<Vulnerabilidad> vulnerabilidades = new ArrayList<>();
         
-        // Clase interna auxiliar para rastrear el estado de cada desafío en la sesión
         class Desafio {
             String idNonce;
             String emisorOriginal;
@@ -90,7 +100,6 @@ public class MotorAnalisis {
 
         for (Mensaje m : p.getMensajes()) {
             List<Nonce> noncesEnMensaje = new ArrayList<>();
-            // Usamos el método recursivo para sacar los nonces
             for (ElementoMensaje elemento : m.getComponentes()) {
                 extraerNoncesRecursivo(elemento, noncesEnMensaje);
             }
@@ -98,11 +107,10 @@ public class MotorAnalisis {
             for (Nonce n : noncesEnMensaje) {
                 boolean esRespuesta = false;
                 
-                // Comprobamos si el nonce actual está respondiendo a un desafío pendiente
                 for (Desafio d : desafiosActivos) {
                     if (d.idNonce.equals(n.getIdentificador())) {
                         
-                        //Si el creador del nonce lo recibe de vuelta, el desafío está superado.
+                        // Mantenemos la flexibilización de protocolos de tres partes (KDC).
                         if (m.getReceptor().getNombre().equals(d.emisorOriginal)) {
                             d.respondido = true;
                             esRespuesta = true;
@@ -124,7 +132,6 @@ public class MotorAnalisis {
             }
         }
 
-        // Si la lista está vacía, es que no hay ni un solo Nonce en todo el protocolo y por tanto no hay desafio-respuesta
         if (desafiosActivos.isEmpty()) {
             Vulnerabilidad advertencia = new Vulnerabilidad(
                 "Advertencia Estructural (Falta de Desafío-Respuesta)", 0,
@@ -133,7 +140,6 @@ public class MotorAnalisis {
             vulnerabilidades.add(advertencia);
             p.registrarVulnerabilidad(advertencia);
         } else {
-             // Cuando se encuentran, comprobamos cuáles no fueron respondidos
             for (Desafio d : desafiosActivos) {
                 if (!d.respondido) {
                     Vulnerabilidad vuln = new Vulnerabilidad(
@@ -153,6 +159,9 @@ public class MotorAnalisis {
         
         // Llavero de claves dinámicas para cada agente 
         Map<String, Set<String>> conocimientosClaves = new HashMap<>();
+        
+        //Almacena las claves de los cifrados que un agente transporta para dárselos a un tercero.
+        Map<String, Set<String>> ticketsParaReenviar = new HashMap<>();
 
         class TareaDescifrado {
             String agenteReceptor, idClaveNecesaria;
@@ -172,6 +181,8 @@ public class MotorAnalisis {
             // Inicializamos llaveros en blanco si no existían
             conocimientosClaves.putIfAbsent(emisor, new HashSet<>());
             conocimientosClaves.putIfAbsent(receptor, new HashSet<>());
+            ticketsParaReenviar.putIfAbsent(emisor, new HashSet<>());
+            ticketsParaReenviar.putIfAbsent(receptor, new HashSet<>());
             
             List<Cifrado> cifradosEnMensaje = new ArrayList<>();
             for (ElementoMensaje e : m.getComponentes()) {
@@ -180,20 +191,34 @@ public class MotorAnalisis {
             
             for (Cifrado c : cifradosEnMensaje) {
                 String idClaveSello = c.getClaveSello().getIdentificador();
-                // Si emisor es "Alice", la clave debe contener "alice" (ej. K_alice_bob) comprobamos para el emisor
+                
+                // Comprobamos para el emisor
                 boolean emisorConoceDeBase = emisor.equalsIgnoreCase("KDC") || emisor.equalsIgnoreCase("S") ||
                                              idClaveSello.toLowerCase().contains(emisor.toLowerCase());
                 
                 boolean emisorLaAdquirio = conocimientosClaves.get(emisor).contains(idClaveSello);
                 
-                // Si el emisor manda un cifrado con una clave que no tiene, es Spoofing
-                if (!emisorConoceDeBase && !emisorLaAdquirio) {
+                
+                // Verificamos si el emisor simplemente está reenviando un ticket
+                boolean esReenvioDeTicket = ticketsParaReenviar.get(emisor).contains(idClaveSello);
+                
+                // Si el emisor no conoce la clave y NO es un ticket que estuviese transportando -> Spoofing
+                if (!emisorConoceDeBase && !emisorLaAdquirio && !esReenvioDeTicket) {
                     Vulnerabilidad vuln = new Vulnerabilidad(
                         "Suplantación de Identidad (Spoofing)", m.getNumeroLinea(),
                         "El agente " + emisor + " envía un bloque cifrado con " + idClaveSello + " sin conocer la clave. Está suplantando la identidad del creador legítimo o reenviando un paquete robado."
                     );
                     vulnerabilidades.add(vuln);
                     p.registrarVulnerabilidad(vuln);
+                }
+                
+                // Si resulta que era un ticket reenviado no pasa nada, se entrega y ya
+                if (esReenvioDeTicket) {
+                    for (TareaDescifrado t : pendientes) {
+                        if (t.agenteReceptor.equals(emisor) && t.idClaveNecesaria.equals(idClaveSello)) {
+                            t.resuelta = true; 
+                        }
+                    }
                 }
                 
                 // Comprobamos para el receptor
@@ -205,6 +230,8 @@ public class MotorAnalisis {
                 // Si el receptor no la conoce y no la adquirió, se crea tarea pendiente
                 if (!receptorConoceDeBase && !receptorLaAdquirio) {
                     pendientes.add(new TareaDescifrado(receptor, idClaveSello, m.getNumeroLinea()));
+                    // Y lo guardamos por si en la siguiente línea decide reenviarlo como Ticket
+                    ticketsParaReenviar.get(receptor).add(idClaveSello);
                 }
             }
             
@@ -233,7 +260,7 @@ public class MotorAnalisis {
             if (!t.resuelta) {
                 Vulnerabilidad vuln = new Vulnerabilidad(
                     "Fallo de Accesibilidad (Clave Inaccesible)", t.linea,
-                    "El agente " + t.agenteReceptor + " recibió un bloque cifrado con " + t.idClaveNecesaria + ", pero no la posee ni le fue distribuida en toda la sesión. Es incapaz de leerlo."
+                    "El agente " + t.agenteReceptor + " recibió un bloque cifrado con " + t.idClaveNecesaria + ", pero no la posee ni le fue distribuida en toda la sesión. Es incapaz de leerlo o reenviarlo a su destinatario."
                 );
                 vulnerabilidades.add(vuln);
                 p.registrarVulnerabilidad(vuln);
