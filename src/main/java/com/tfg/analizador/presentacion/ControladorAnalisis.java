@@ -104,8 +104,6 @@ public class ControladorAnalisis {
             };
             return cell;
         });
-
-        
     }
 
     @FXML
@@ -125,13 +123,34 @@ public class ControladorAnalisis {
         });
     }
 
+    // Ahora este botón solo valida la sintaxis léxica.No hace cálculos criptográficos ni rellena la tabla.
     @FXML
     void handleValidarSintaxis(ActionEvent event) {
-        // Extraemos el texto plano del editor avanzado
         String textoUsuario = editorProtocolo.getText();
 
         if (textoUsuario.trim().isEmpty()) {
             GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "Escribe un protocolo antes de validar.", "Aceptar");
+            return;
+        }
+
+        try {
+            ServicioAnalisis servicio = new ServicioAnalisis();
+            servicio.validarSintaxisSolo(textoUsuario); // Lanza excepción si la estructura falla
+
+            GestorDialogos.mostrarConfirmacionEstandar("Validación", "Sintaxis Correcta", "La estructura del protocolo es válida. Puedes proceder a analizarlo.", "Aceptar");
+        } catch (Exception e) {
+            GestorDialogos.mostrarConfirmacionEstandar("Error de Sintaxis", "Estructura incorrecta", e.getMessage(), "Aceptar");
+        }
+    }
+
+    // Este botón ejecuta tanto el validador léxico como el motor de 
+    // seguridad, volcando los resultados finales en la interfaz.
+    @FXML
+    void handleAnalizarProtocolo(ActionEvent event) {
+        String textoUsuario = editorProtocolo.getText();
+
+        if (textoUsuario.trim().isEmpty()) {
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "Escribe un protocolo antes de analizar.", "Aceptar");
             return;
         }
 
@@ -160,8 +179,8 @@ public class ControladorAnalisis {
                     "Aceptar");
             }
         } catch (Exception e) {
-            // Mostramos el mensaje de la excepción
-            GestorDialogos.mostrarConfirmacionEstandar("Error de Compilación", "Sintaxis incorrecta", e.getMessage(), "Aceptar");
+            // Mostramos el mensaje de la excepción (errores léxicos o sintácticos que paren la compilación)
+            GestorDialogos.mostrarConfirmacionEstandar("Error de Compilación", "No se puede analizar", e.getMessage(), "Aceptar");
         }
     }
 

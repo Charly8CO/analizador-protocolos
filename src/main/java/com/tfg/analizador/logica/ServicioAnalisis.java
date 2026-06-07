@@ -8,6 +8,11 @@ import com.tfg.analizador.modelo.Usuario;
 
 public class ServicioAnalisis {
     
+    public boolean validarSintaxisSolo(String textoPlano) throws Exception {
+        AnalizadorLexico analizador = new AnalizadorLexico();
+        return analizador.analizarSintaxis(textoPlano);
+    }
+
     public Protocolo procesarNuevoProtocolo(String textoPlano) throws Exception {
         AnalizadorLexico analizador = new AnalizadorLexico();
         MotorAnalisis motor = new MotorAnalisis();

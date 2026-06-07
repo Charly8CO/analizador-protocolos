@@ -22,12 +22,15 @@
         <HBox spacing="0">
             
             <VBox minWidth="250.0" maxWidth="250.0" prefWidth="250.0" styleClass="panel-lateral-izq">
-                <Label alignment="CENTER" maxWidth="Infinity" styleClass="cabecera-analizador" text="Analizar Protocolo">
+                <Label alignment="CENTER" maxWidth="Infinity" styleClass="cabecera-analizador" text="Herramientas de Análisis">
                     <font><Font name="System Bold" size="18.0" /></font>
                     <padding><Insets bottom="10.0" top="10.0" /></padding>
                 </Label>
                 
                 <Button onAction="#handleValidarSintaxis" maxWidth="Infinity" text="Validar sintáxis" styleClass="boton-herramienta" prefHeight="35.0" />
+                
+                <Button onAction="#handleAnalizarProtocolo" maxWidth="Infinity" text="Analizar protocolo" styleClass="boton-herramienta" prefHeight="35.0" />
+                
                 <Button onAction="#handleGuardarProtocolo" maxWidth="Infinity" text="Guardar protocolo" styleClass="boton-herramienta" prefHeight="35.0" />
                 <Button onAction="#handleLimpiarProtocolo" maxWidth="Infinity" text="Limpiar protocolo" styleClass="boton-herramienta" prefHeight="35.0" />
                 
