@@ -2,6 +2,7 @@ package com.tfg.analizador.persistencia;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class GestorBBDD {
     //URL de la base de datos
     private static final String URL = "jdbc:sqlite:analisis.db?foreign_keys=on";
 
-    //E stablecer conexión y devolverla para que se pueda usar
+    // Establecer conexión y devolverla para que se pueda usar
    	public static Connection getConexion() throws SQLException {
         if (conexion == null || conexion.isClosed()) {
             conexion = DriverManager.getConnection(URL);
@@ -75,46 +76,28 @@ public class GestorBBDD {
 		}
 	}
 
-	/**
-	 * 
-	 * @param us
-	 */
 	public void guardarUsuario(Usuario us) throws SQLException{
 		// Los ? ? sirven para indicar que los datos necesarios para la consulta serán enviados luego
 		// Evita ataques de inyección
 		String sql = "INSERT INTO USUARIO (nombre_usuario, hash_contra) VALUES (?, ?)";
 		
 		// Abrimos el canal de la consulta 
-		// Al hacerlo con el try hacemos que se cierre al terminar
+		// Al hacerlo con el try hacemos que se cierre al terminar		
 		try (java.sql.PreparedStatement stmt = getConexion().prepareStatement(sql)) {
-			
 			// Pasamos los datos reales en vez de las  1 = primer ? y 2 = segundo ?
 			stmt.setString(1, us.getNombreUsuario());
 			stmt.setString(2, us.getHashPass());
-
 			//actualizamos
 			stmt.executeUpdate();
-			
 			System.out.println("Usuario guardado con éxito");
 		}
-			
 	}
 
-
-	/**
-	 * 
-	 * @param email
-	 */
 	public Usuario obtenerUsuarioEmail(String email) throws SQLException{
-
 		String sql = "SELECT * FROM USUARIO WHERE nombre_usuario = ?";
-
 		try(java.sql.PreparedStatement stmt = getConexion().prepareStatement(sql)){
-
 			stmt.setString(1, email);
-
 			try(java.sql.ResultSet rs = stmt.executeQuery()){
-
 				if (rs.next()) {
 					Usuario u = new Usuario();
 					u.setIdUsuario(rs.getInt("id_usuario"));
@@ -122,52 +105,48 @@ public class GestorBBDD {
 					u.setHashPass(rs.getString("hash_contra"));
 					return u;
 				}
-
 			}
-
 		}
-
 		//Cuando el usuario no existe
 		return null;
-
 	}
 
 	/**
-	 * 
-	 * @param nombre
-	 * @param hashPass
+	 * Inserta el registro de un archivo de protocolo en la base de datos.
+	 * Se usa CURRENT_TIMESTAMP para la fecha automática. es_seguro queda en NULL.
 	 */
+	public static boolean insertarProtocolo(int idUsuario, String nombreArchivo, String rutaAbsoluta) {
+        String sql = "INSERT INTO PROTOCOLO (id_usuario, nombre_protocolo, Path, fecha_analisis) VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
+
+        try (Connection conn = getConexion(); 
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, idUsuario);
+            pstmt.setString(2, nombreArchivo);
+            pstmt.setString(3, rutaAbsoluta);
+            
+            pstmt.executeUpdate();
+            return true;
+            
+        } catch (SQLException e) {
+            System.err.println("Error al insertar el protocolo en SQLite: " + e.getMessage());
+            return false;
+        }
+    }
+
 	public Usuario verificarCredenciales(String nombre, String hashPass) {
-		// TODO - implement GestorBBDD.verificarCredenciales
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param u
-	 * @param p
-	 */
 	public boolean guardarHistorial(Usuario u, Protocolo p) {
-		// TODO - implement GestorBBDD.guardarHistorial
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param idusuario
-	 */
 	public List<Protocolo> cargarProtocolos(int idusuario) {
-		// TODO - implement GestorBBDD.cargarProtocolos
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @param idprotocolo
-	 */
 	public boolean eliminarProtocolo(int idprotocolo) {
-		// TODO - implement GestorBBDD.eliminarProtocolo
 		throw new UnsupportedOperationException();
 	}
-
 }

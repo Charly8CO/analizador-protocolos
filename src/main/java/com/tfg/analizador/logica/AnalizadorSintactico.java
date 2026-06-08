@@ -65,8 +65,8 @@ public class AnalizadorSintactico {
             return cifrado;
         }
 
-        // Detectar Nonce, empiezan por N
-        if (token.startsWith("N_") || token.startsWith("N") && token.length() > 1) {
+        // Detectar Nonce y TimeStamps, empiezan por N o por T
+        if (token.startsWith("N_") || (token.startsWith("N") && token.length() > 1) || token.startsWith("Time") || token.startsWith("T_")) {
             return new Nonce(token, actorCreador);
         }
 

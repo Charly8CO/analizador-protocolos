@@ -5,6 +5,7 @@ import java.nio.file.Files;
 
 import com.tfg.analizador.modelo.Protocolo;
 import com.tfg.analizador.modelo.Usuario;
+import com.tfg.analizador.persistencia.GestorBBDD;
 
 public class ServicioAnalisis {
     
@@ -35,10 +36,19 @@ public class ServicioAnalisis {
         Usuario usuarioActivo = GestorSesion.getInstancia().getUsuarioActivo();
         
         if (usuarioActivo != null) {
-            // Simulamos el guardado en BBDD (esto conectará con tu GestorBBDD próximamente)
-            System.out.println("Registrando en SQLite: " + archivo.getName() + " para el usuario " + usuarioActivo.getNombreUsuario());
-            
-            // Aquí iría: GestorBBDD.insertarProtocolo(usuarioActivo.getId(), archivo.getName(), archivo.getAbsolutePath());
+           
+            // Insertamos el registro sin los nullables
+            boolean exito = GestorBBDD.insertarProtocolo(
+                usuarioActivo.getIdUsuario(), 
+                archivo.getName(), 
+                archivo.getAbsolutePath()
+            );
+
+            if (!exito) {
+                throw new Exception("El archivo se guardó en el disco local, pero hubo un error al registrarlo en el historial de la base de datos.");
+            } else {
+                System.out.println("Registrando en SQLite: " + archivo.getName() + " para el usuario " + usuarioActivo.getNombreUsuario());
+            }
         }
     }
     
