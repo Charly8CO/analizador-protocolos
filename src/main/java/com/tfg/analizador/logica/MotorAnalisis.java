@@ -17,177 +17,284 @@ import com.tfg.analizador.modelo.Vulnerabilidad;
 
 public class MotorAnalisis {
 
-    public List<Vulnerabilidad> evaluarFrescura(Protocolo p) {
-        List<Vulnerabilidad> vulnerabilidades = new ArrayList<>();
-        
-        // Map para guardar <Identificador del Nonce, Nombre del Creador Original>
+    // Evalua la distribución de claves de sesión para evitar "Replay Attacks" (Ataques de repetición).
+    public void evaluarFrescuraDeClaves(Protocolo p, List<Vulnerabilidad> vulnerabilidades) {
+        // Diccionario para rastrear qué agente originó cada Nonce: <Identificador, NombreCreador>
         Map<String, String> creadoresNonces = new HashMap<>();
 
         for (Mensaje m : p.getMensajes()) {
-            List<Nonce> noncesEnMensaje = new ArrayList<>();
+            String receptor = m.getReceptor().getNombre();
+            String emisor = m.getEmisor().getNombre();
 
-            // Extraemos todos los Nonces presentes en el mensaje
-            for (ElementoMensaje elemento : m.getComponentes()) {
-                extraerNoncesRecursivo(elemento, noncesEnMensaje);
+            // Registrar los creadores de los nuevos nonces 
+            List<Nonce> noncesEnMensaje = new ArrayList<>();
+            for(ElementoMensaje e : m.getComponentes()) extraerNoncesRecursivo(e, noncesEnMensaje);
+            
+            for(Nonce n : noncesEnMensaje) {
+                String base = getBaseNonce(n.getIdentificador());
+                creadoresNonces.putIfAbsent(base, emisor);
             }
 
-            // Evaluamos la propiedad de frescura (Freshness)
-            for (Nonce n : noncesEnMensaje) {
-                
-                // Extraemos la base del nonce eliminando operaciones matemáticas.
-                String idOriginal = n.getIdentificador();
-                String baseNonce = idOriginal.split("[\\+\\-]", 2)[0].trim();
-                boolean tieneOperacion = !baseNonce.equals(idOriginal.trim());
+            // Una vez memorizados los nonces, si el receptor es un servidor de confianza,
+            // detenemos la auditoría de este mensaje porque los servidores no sufren Replay Attacks.
+            if (receptor.equalsIgnoreCase("KDC") || receptor.equalsIgnoreCase("S") || receptor.equalsIgnoreCase("T")) {
+                continue;
+            }
 
-                if (!creadoresNonces.containsKey(baseNonce)) {
-                    // Es la primera vez que vemos el Nonce. El emisor actual es su creador legítimo.
-                    creadoresNonces.put(baseNonce, m.getEmisor().getNombre());
-                } else {
-                    // El Nonce ya existe. ¿Lo está reenviando otro agente o lo reutiliza el creador?
-                    String creadorOriginal = creadoresNonces.get(baseNonce);
-                    
-                    // Si el creador original vuelve a inyectar el MISMO nonce como si fuera nuevo
-                    // en un paso posterior, viola la regla de "Number Used ONCE"
-                    if (m.getEmisor().getNombre().equals(creadorOriginal)) {
-                        Vulnerabilidad vuln = new Vulnerabilidad(
-                            "Fallo de Frescura (Reutilización de Nonce)", 
-                            m.getNumeroLinea(), 
-                            "El agente " + creadorOriginal + " ha reutilizado el identificador base " + baseNonce + " que ya había generado previamente. Esto compromete la frescura al violar la regla de un solo uso."
-                        );
-                        vulnerabilidades.add(vuln);
-                        p.registrarVulnerabilidad(vuln);
-                    } else {
-                        // Verificamos si el emisor es un Servidor de Confianza.
-                        //Este no necesita aplicar funciones algorítmicas por el diseño de sus tickets. 
-                        // Solo exigimos la función asimétrica en canales simétricos directos.
-                        String nombreEmisor = m.getEmisor().getNombre();
-                        boolean esServidorConfianza = nombreEmisor.equalsIgnoreCase("KDC") || 
-                                                      nombreEmisor.equalsIgnoreCase("S") || 
-                                                      nombreEmisor.equalsIgnoreCase("T");
+            // Auditar los tickets/cifrados que recibe el receptor
+            List<Cifrado> cifrados = new ArrayList<>();
+            for(ElementoMensaje e : m.getComponentes()) extraerCifradosRecursivo(e, cifrados);
 
-                        if (!tieneOperacion && !esServidorConfianza) {
-                            Vulnerabilidad vuln = new Vulnerabilidad(
-                                "Falta de Asimetría (Riesgo de Reflexión)", 
-                                m.getNumeroLinea(), 
-                                "El agente " + nombreEmisor + " reenvía el nonce " + baseNonce + " intacto. Debería aplicarse una función algorítmica (ej. " + baseNonce + "-1) para evitar ataques de reflexión o espejo."
-                            );
-                            vulnerabilidades.add(vuln);
-                            p.registrarVulnerabilidad(vuln);
+            for(Cifrado c : cifrados) {
+                String claveSello = c.getClaveSello().getIdentificador();
+                boolean receptorPuedeLeer = claveSello.toLowerCase().contains(receptor.toLowerCase());
+
+                if(receptorPuedeLeer) {
+                    List<Clave> clavesDentro = new ArrayList<>();
+                    for(ElementoMensaje hijo : c.getContenido()) extraerClavesRecursivo(hijo, clavesDentro);
+
+                    for(Clave k : clavesDentro) {
+                        // Verificamos si se le está distribuyendo una clave de sesión (Ej: K_AB, descartando su propia clave maestra)
+                        if(k.getIdentificador().toLowerCase().contains("k") && !k.getIdentificador().equalsIgnoreCase(claveSello)) {
+                            
+                            boolean tieneFrescura = false;
+                            List<Nonce> noncesDentro = new ArrayList<>();
+                            for(ElementoMensaje hijo : c.getContenido()) extraerNoncesRecursivo(hijo, noncesDentro);
+
+                            // A) Búsqueda interna: Comprobamos si el ticket cerrado incluye una garantía de frescura
+                            for(Nonce n : noncesDentro) {
+                                String base = getBaseNonce(n.getIdentificador());
+                                if (base.startsWith("Time") || base.startsWith("T_")) tieneFrescura = true;
+                                if (receptor.equals(creadoresNonces.get(base))) tieneFrescura = true;
+                            }
+
+                            // Si el ticket no es fresco por dentro, miramos si en el mismo mensaje viaja otro bloque 
+                            // cifrado con esta clave que sí contenga la prueba de vida en paralelo.
+                            if(!tieneFrescura) {
+                                for(Cifrado otroCifrado : cifrados) {
+                                    if(otroCifrado.getClaveSello().getIdentificador().equals(k.getIdentificador())) {
+                                        List<Nonce> noncesAcompanantes = new ArrayList<>();
+                                        for(ElementoMensaje hijo : otroCifrado.getContenido()) extraerNoncesRecursivo(hijo, noncesAcompanantes);
+                                        
+                                        for(Nonce nAcomp : noncesAcompanantes) {
+                                            String base = getBaseNonce(nAcomp.getIdentificador());
+                                            if (base.startsWith("Time") || base.startsWith("T_")) tieneFrescura = true;
+                                            if (receptor.equals(creadoresNonces.get(base))) tieneFrescura = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Si tras ambas búsquedas no hay frescura, es vulnerable a reinyección.
+                            if(!tieneFrescura) {
+                                Vulnerabilidad vuln = new Vulnerabilidad(
+                                    "Falta de Frescura en Clave (Replay Attack)", m.getNumeroLinea(),
+                                    "El agente " + receptor + " recibe la clave de sesión " + k.getIdentificador() + " sin garantías de frescura en el mensaje. Un atacante podría reinyectar una sesión antigua."
+                                );
+                                registrarVulnUnica(vulnerabilidades, p, vuln, m.getNumeroLinea());
+                            }
                         }
                     }
                 }
             }
         }
-        return vulnerabilidades;
     }
 
-    private void extraerNoncesRecursivo(ElementoMensaje elemento, List<Nonce> recolector) {
-        if (elemento instanceof Nonce nonce) {
-            recolector.add(nonce);
-        } else if (elemento instanceof Cifrado bloqueCifrado) {
-            for (ElementoMensaje hijo : bloqueCifrado.getContenido()) {
-                extraerNoncesRecursivo(hijo, recolector);
+    // Detecta ataques de espejo (Reflexión) y defectos de tipo (Type Flaws) (un tipo de ataques similar a los de repetición).
+
+    public void evaluarRiesgoReflexion(Protocolo p, List<Vulnerabilidad> vulnerabilidades) {
+        // Clase interna para llevar un registro del formato exacto de los bloques que emite cada agente
+        class RegistroCifrado { 
+            String clave; String nonce; int numElementos; int posicion; // Rastreo de aridad e índice posicional
+            RegistroCifrado(String c, String n, int num, int pos){clave=c; nonce=n; numElementos=num; posicion=pos;} 
+        }
+        
+        // Memoria de los criptogramas que emite cada agente
+        Map<String, List<RegistroCifrado>> emitidos = new HashMap<>();
+
+        for(Mensaje m : p.getMensajes()) {
+            String emisor = m.getEmisor().getNombre();
+            String receptor = m.getReceptor().getNombre();
+
+            List<Cifrado> cifrados = new ArrayList<>();
+            for(ElementoMensaje e : m.getComponentes()) extraerCifradosRecursivo(e, cifrados);
+
+            for(Cifrado c : cifrados) {
+                String clave = c.getClaveSello().getIdentificador();
+                int numElementosCifrado = c.getContenido().size(); 
+                
+                // Si el receptor no puede leer la clave, solo actúa de cartero, no hay riesgo de reflexión.
+                boolean receptorPuedeLeer = receptor.equalsIgnoreCase("KDC") || receptor.equalsIgnoreCase("S") || 
+                                            receptor.equalsIgnoreCase("T") || clave.toLowerCase().contains(receptor.toLowerCase());
+
+                List<Nonce> nonces = new ArrayList<>();
+                for(ElementoMensaje e : c.getContenido()) extraerNoncesRecursivo(e, nonces);
+
+                for(Nonce n : nonces) {
+                    // Operaciones como N-1 rompen la reflexión matemática, por lo que las ignoramos
+                    if(!tieneOperacion(n.getIdentificador())) {
+                        String baseNonce = getBaseNonce(n.getIdentificador());
+                        
+                        // Buscamos en qué posición exacta del cifrado viaja el nonce
+                        int posicionActual = obtenerPosicionNonce(c, baseNonce);
+                        
+                        // Registramos lo que el emisor saca a la red guardando longitud y posición exacta
+                        emitidos.computeIfAbsent(emisor, k -> new ArrayList<>())
+                                .add(new RegistroCifrado(clave, baseNonce, numElementosCifrado, posicionActual));
+                        
+                        // Evaluamos si el receptor actual es víctima de su propio reflejo
+                        if (receptorPuedeLeer) {
+                            List<RegistroCifrado> previos = emitidos.getOrDefault(receptor, new ArrayList<>());
+                            for(RegistroCifrado prev : previos) {
+                                if(prev.clave.equals(clave) && prev.nonce.equals(baseNonce)) {
+                                    // Para que un ataque de reflexión / Type Flaw funcione, el bloque reflejado 
+                                    // debe tener la misma o mayor longitud,
+                                    // y el Nonce debe estar en la misma en ambos bloques.
+                                    if (numElementosCifrado <= prev.numElementos && posicionActual == prev.posicion) {
+                                        Vulnerabilidad vuln = new Vulnerabilidad(
+                                            "Riesgo de Reflexión (Type Flaw)", m.getNumeroLinea(),
+                                            "El agente " + receptor + " espera un bloque (" + clave + ") con su nonce intacto en la posición " + posicionActual + ". Al coincidir la posición y tener " + numElementosCifrado + " elementos frente a los " + prev.numElementos + " que emitió, un atacante puede reflejarlo (Type Flaw, ej: Otway-Rees)."
+                                        );
+                                        registrarVulnUnica(vulnerabilidades, p, vuln, m.getNumeroLinea());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    public List<Vulnerabilidad> evaluarDesafioRespuesta(Protocolo p) {
-        List<Vulnerabilidad> vulnerabilidades = new ArrayList<>();
-        
+    // Evaluación de desafío respuesta
+    public void evaluarDesafioRespuesta(Protocolo p, List<Vulnerabilidad> vulnerabilidades) {
         class Desafio {
-            String idNonce;
-            String emisorOriginal;
-            String receptorEsperado;
-            boolean respondido = false;
-            int lineaDesafio;
-
-            Desafio(String id, String emisor, String receptor, int linea) {
-                this.idNonce = id;
-                this.emisorOriginal = emisor;
-                this.receptorEsperado = receptor;
-                this.lineaDesafio = linea;
-            }
+            String idNonce; String emisorOriginal; boolean respondido = false; int lineaDesafio;
+            Desafio(String id, String emisor, int linea) { this.idNonce = id; this.emisorOriginal = emisor; this.lineaDesafio = linea; }
         }
         
         List<Desafio> desafiosActivos = new ArrayList<>();
+        boolean usaTimestamps = false;
 
         for (Mensaje m : p.getMensajes()) {
+            String receptorActual = m.getReceptor().getNombre();
+            String emisorActual = m.getEmisor().getNombre();
+            
             List<Nonce> noncesEnMensaje = new ArrayList<>();
-            for (ElementoMensaje elemento : m.getComponentes()) {
-                extraerNoncesRecursivo(elemento, noncesEnMensaje);
-            }
+            for (ElementoMensaje elemento : m.getComponentes()) extraerNoncesRecursivo(elemento, noncesEnMensaje);
 
             for (Nonce n : noncesEnMensaje) {
-                // Extraemos la base para ignorar el "-1" o "+1" al buscar coincidencias en la memoria
-                String baseNonce = n.getIdentificador().split("[\\+\\-]", 2)[0].trim();
-                boolean esRespuesta = false;
+                String idCompleto = n.getIdentificador();
+                String baseNonce = getBaseNonce(idCompleto);
                 
+                // Las marcas de tiempo no requieren respuesta interactiva, actúan como mitigadores globales.
+                if (baseNonce.startsWith("Time") || baseNonce.startsWith("T_")) {
+                    usaTimestamps = true; 
+                    continue; 
+                }
+
+                boolean esRespuesta = false;
                 for (Desafio d : desafiosActivos) {
                     if (d.idNonce.equals(baseNonce)) {
                         
-                        // Mantenemos la flexibilización de protocolos de tres partes (KDC).
-                        // Ya no exigimos que el que responda sea el "receptorEsperado" original.
-                        // Basta con que el mensaje actual tenga como receptor al creador original 
-                        // del Nonce. Si el creador lo recibe de vuelta, el desafío está superado.
-                        if (m.getReceptor().getNombre().equals(d.emisorOriginal)) {
-                            d.respondido = true;
-                            esRespuesta = true;
+                        // El desafío solo se supera si el creador recibe el nonce de vuelta,
+                        // y además viene cifrado o alterado algorítmicamente.
+                        if (receptorActual.equals(d.emisorOriginal)) {
+                            boolean estaMutado = tieneOperacion(idCompleto);
+                            String claveEnvolvente = obtenerClaveEnvolvente(m.getComponentes(), baseNonce);
+                            boolean estaCifrado = !claveEnvolvente.equals("PLANO");
+
+                            if (estaMutado || estaCifrado) {
+                                d.respondido = true; 
+                                esRespuesta = true;
+                            }
                         }
                     }
                 }
 
+                // Si no se identificó como una respuesta a un desafío previo, lo registramos como un nuevo desafío al aire
                 if (!esRespuesta) {
-                    boolean yaExiste = desafiosActivos.stream()
-                        .anyMatch(d -> d.idNonce.equals(baseNonce));
-                    
+                    boolean yaExiste = desafiosActivos.stream().anyMatch(d -> d.idNonce.equals(baseNonce));
                     if (!yaExiste) {
-                        desafiosActivos.add(new Desafio(
-                            baseNonce, m.getEmisor().getNombre(), 
-                            m.getReceptor().getNombre(), m.getNumeroLinea()
-                        ));
+                        desafiosActivos.add(new Desafio(baseNonce, emisorActual, m.getNumeroLinea()));
                     }
                 }
             }
         }
 
-        if (desafiosActivos.isEmpty()) {
+        // Si el protocolo carece de control de estado se advierte estructuralmente.
+        if (desafiosActivos.isEmpty() && !usaTimestamps) {
             Vulnerabilidad advertencia = new Vulnerabilidad(
                 "Advertencia Estructural (Falta de Desafío-Respuesta)", 0,
-                "El protocolo no implementa ningún mecanismo de desafío-respuesta (no se han detectado Nonces). Esto lo hace altamente susceptible a ataques de repetición estáticos."
+                "El protocolo no implementa mecanismos de desafío-respuesta interactivos ni marcas de tiempo. Altamente susceptible a ataques estáticos."
             );
-            vulnerabilidades.add(advertencia);
-            p.registrarVulnerabilidad(advertencia);
+            registrarVulnUnica(vulnerabilidades, p, advertencia, 0);
         } else {
             for (Desafio d : desafiosActivos) {
                 if (!d.respondido) {
                     Vulnerabilidad vuln = new Vulnerabilidad(
                         "Fallo de Desafío-Respuesta", d.lineaDesafio,
-                        "El agente " + d.emisorOriginal + " envió el nonce " + d.idNonce + " a " + d.receptorEsperado + ", pero nunca recibió una respuesta válida de vuelta."
+                        "El agente " + d.emisorOriginal + " envió el nonce " + d.idNonce + " como desafío, pero nunca recibió una prueba criptográfica válida de vuelta confirmando su procesamiento."
                     );
-                    vulnerabilidades.add(vuln);
-                    p.registrarVulnerabilidad(vuln);
+                    registrarVulnUnica(vulnerabilidades, p, vuln, d.lineaDesafio);
                 }
             }
         }
-        return vulnerabilidades;
     }
 
-    public List<Vulnerabilidad> evaluarClavesYSuplantacion(Protocolo p) {
-        List<Vulnerabilidad> vulnerabilidades = new ArrayList<>();
+    // Comprueba si una clave de sesión distribuida es utilizada activamente por ambas partes.
+    public void evaluarAutenticacionMutua(Protocolo p, List<Vulnerabilidad> vulnerabilidades) {
+        Set<String> clavesSesion = new HashSet<>();
         
-        // Llavero de claves dinámicas para cada agente 
+        // Extraemos todas las claves de sesión distribuidas en el protocolo
+        for (Mensaje m : p.getMensajes()) {
+            List<Clave> claves = new ArrayList<>();
+            for(ElementoMensaje e : m.getComponentes()) extraerClavesRecursivo(e, claves);
+            for(Clave k : claves) {
+                String id = k.getIdentificador().toLowerCase();
+                // Consideramos claves de sesión aquellas que contienen "k" pero no son maestras del KDC
+                if (id.contains("k") && !id.contains("kdc") && !id.contains("s") && !id.contains("t")) {
+                    clavesSesion.add(k.getIdentificador());
+                }
+            }
+        }
+        
+        // Verificamos cuántos agentes distintos utilizan activamente cada clave de sesión para cifrar
+        for (String k : clavesSesion) {
+            Set<String> usuariosQueCifran = new HashSet<>();
+            for (Mensaje m : p.getMensajes()) {
+                List<Cifrado> cifrados = new ArrayList<>();
+                for(ElementoMensaje e : m.getComponentes()) extraerCifradosRecursivo(e, cifrados);
+                for(Cifrado c : cifrados) {
+                    if (c.getClaveSello().getIdentificador().equals(k)) {
+                        usuariosQueCifran.add(m.getEmisor().getNombre());
+                    }
+                }
+            }
+            
+            // Si la clave se distribuyó, pero solo un agente la utiliza, la otra parte nunca confirmó la sesión.
+            if (usuariosQueCifran.size() == 1) {
+                String emisorUnico = usuariosQueCifran.iterator().next();
+                Vulnerabilidad vuln = new Vulnerabilidad(
+                    "Autenticación Unilateral (Falta de Confirmación)", p.getMensajes().size(),
+                    "La clave de sesión " + k + " fue distribuida, pero solo " + emisorUnico + " la utiliza activamente. El otro extremo nunca demuestra haberla recibido, impidiendo la autenticación mutua (Fallo crítico)."
+                );
+                registrarVulnUnica(vulnerabilidades, p, vuln, p.getMensajes().size());
+            }
+        }
+    }
+
+    // Detecta suplantación (Spoofing) si un agente emite un cifrado sin conocer la clave.
+    // Detecta inaccesibilidad si un agente recibe un bloque cifrado y no tiene la llave para abrirlo.
+     
+    public void evaluarClavesYSuplantacion(Protocolo p, List<Vulnerabilidad> vulnerabilidades) {
+        // Mapas para almacenar lo que sabe cada agente y los tickets que simplemente hace de "cartero"
         Map<String, Set<String>> conocimientosClaves = new HashMap<>();
-        
-        //Almacena las claves de los cifrados que un agente transporta para dárselos a un tercero.
         Map<String, Set<String>> ticketsParaReenviar = new HashMap<>();
 
         class TareaDescifrado {
-            String agenteReceptor, idClaveNecesaria;
-            int linea;
-            boolean resuelta = false;
-            TareaDescifrado(String ag, String cl, int l) {
-                this.agenteReceptor = ag; this.idClaveNecesaria = cl; this.linea = l;
-            }
+            String agenteReceptor, idClaveNecesaria; int linea; boolean resuelta = false;
+            TareaDescifrado(String ag, String cl, int l) { this.agenteReceptor = ag; this.idClaveNecesaria = cl; this.linea = l; }
         }
         
         List<TareaDescifrado> pendientes = new ArrayList<>();
@@ -196,122 +303,178 @@ public class MotorAnalisis {
             String emisor = m.getEmisor().getNombre();
             String receptor = m.getReceptor().getNombre();
             
-            // Inicializamos llaveros en blanco si no existían
             conocimientosClaves.putIfAbsent(emisor, new HashSet<>());
             conocimientosClaves.putIfAbsent(receptor, new HashSet<>());
             ticketsParaReenviar.putIfAbsent(emisor, new HashSet<>());
             ticketsParaReenviar.putIfAbsent(receptor, new HashSet<>());
             
             List<Cifrado> cifradosEnMensaje = new ArrayList<>();
-            for (ElementoMensaje e : m.getComponentes()) {
-                extraerCifradosRecursivo(e, cifradosEnMensaje);
-            }
+            for (ElementoMensaje e : m.getComponentes()) extraerCifradosRecursivo(e, cifradosEnMensaje);
             
             for (Cifrado c : cifradosEnMensaje) {
                 String idClaveSello = c.getClaveSello().getIdentificador();
                 
-                // Comprobamos para el emisor
-                boolean emisorConoceDeBase = emisor.equalsIgnoreCase("KDC") || emisor.equalsIgnoreCase("S") ||
+                // Determinamos si el emisor tiene derecho lógico a usar esta clave
+                boolean emisorConoceDeBase = emisor.equalsIgnoreCase("KDC") || emisor.equalsIgnoreCase("S") || emisor.equalsIgnoreCase("T") ||
                                              idClaveSello.toLowerCase().contains(emisor.toLowerCase());
-                
                 boolean emisorLaAdquirio = conocimientosClaves.get(emisor).contains(idClaveSello);
-                
-                
-                // Verificamos si el emisor simplemente está reenviando un ticket
                 boolean esReenvioDeTicket = ticketsParaReenviar.get(emisor).contains(idClaveSello);
                 
-                // Si el emisor no conoce la clave y NO es un ticket que estuviese transportando -> Spoofing
+                // Si no la conoce de base, ni la adquirió, ni la está reenviando como cartero opaco -> Spoofing
                 if (!emisorConoceDeBase && !emisorLaAdquirio && !esReenvioDeTicket) {
                     Vulnerabilidad vuln = new Vulnerabilidad(
                         "Suplantación de Identidad (Spoofing)", m.getNumeroLinea(),
-                        "El agente " + emisor + " envía un bloque cifrado con " + idClaveSello + " sin conocer la clave. Está suplantando la identidad del creador legítimo o reenviando un paquete robado."
+                        "El agente " + emisor + " envía un bloque cifrado con " + idClaveSello + " sin poseer la clave simétrica. Está forjando un mensaje falso o utilizando una clave a la que no debería tener acceso."
                     );
-                    vulnerabilidades.add(vuln);
-                    p.registrarVulnerabilidad(vuln);
+                    registrarVulnUnica(vulnerabilidades, p, vuln, m.getNumeroLinea());
                 }
+                // Comprueba la accesibilidad
+                boolean receptorConoceDeBase = receptor.equalsIgnoreCase("KDC") || receptor.equalsIgnoreCase("S") || receptor.equalsIgnoreCase("T") ||
+                                               idClaveSello.toLowerCase().contains(receptor.toLowerCase());
+                boolean receptorLaAdquirio = conocimientosClaves.get(receptor).contains(idClaveSello);
                 
-                // Si resulta que era un ticket reenviado no pasa nada, se entrega y ya
-                if (esReenvioDeTicket) {
-                    for (TareaDescifrado t : pendientes) {
-                        if (t.agenteReceptor.equals(emisor) && t.idClaveNecesaria.equals(idClaveSello)) {
-                            t.resuelta = true; 
+                if (!receptorConoceDeBase && !receptorLaAdquirio) {
+                    // Si no puede abrirlo, se anota como tarea pendiente y se guarda como ticket opaco para reenvío
+                    pendientes.add(new TareaDescifrado(receptor, idClaveSello, m.getNumeroLinea()));
+                    ticketsParaReenviar.get(receptor).add(idClaveSello);
+                } else {
+                    // Si PUEDE abrirlo, y esto era un ticket de transporte, la deuda queda saldada
+                    if (esReenvioDeTicket) {
+                        for (TareaDescifrado t : pendientes) {
+                            if (t.agenteReceptor.equals(emisor) && t.idClaveNecesaria.equals(idClaveSello)) t.resuelta = true; 
                         }
                     }
                 }
-                
-                // Comprobamos para el receptor
-                boolean receptorConoceDeBase = receptor.equalsIgnoreCase("KDC") || receptor.equalsIgnoreCase("S") ||
-                                               idClaveSello.toLowerCase().contains(receptor.toLowerCase());
-                                               
-                boolean receptorLaAdquirio = conocimientosClaves.get(receptor).contains(idClaveSello);
-                
-                // Si el receptor no la conoce y no la adquirió, se crea tarea pendiente
-                if (!receptorConoceDeBase && !receptorLaAdquirio) {
-                    pendientes.add(new TareaDescifrado(receptor, idClaveSello, m.getNumeroLinea()));
-                    // Y lo guardamos por si en la siguiente línea decide reenviarlo como Ticket
-                    ticketsParaReenviar.get(receptor).add(idClaveSello);
-                }
             }
-            
-            // Actualizamos la dinámica de llaveros buscando claves enviadas como datos
-            List<Clave> clavesAdquiridas = new ArrayList<>();
+        
+            List<Clave> clavesNuevas = new ArrayList<>();
             for (ElementoMensaje e : m.getComponentes()) {
-                extraerClavesRecursivo(e, clavesAdquiridas);
+                // Solo adquiere conocimiento (interior de las llaves) si posee la clave para descifrar el bloque
+                adquirirConocimientoRecursivo(e, receptor, conocimientosClaves.get(receptor), clavesNuevas);
             }
             
-            for (Clave cl : clavesAdquiridas) {
-                String idClaveAcabadaDeRecibir = cl.getIdentificador();
-                // El receptor añade la clave a su memoria
-                conocimientosClaves.get(receptor).add(idClaveAcabadaDeRecibir);
-                
-                // Si esto resuelve un mensaje que no podía leer antes, saldamos la deuda
+            // Verificamos si alguna clave nueva resuelve un bloqueo pendiente anterior
+            for (Clave cl : clavesNuevas) {
                 for (TareaDescifrado t : pendientes) {
-                    if (t.agenteReceptor.equals(receptor) && t.idClaveNecesaria.equals(idClaveAcabadaDeRecibir)) {
-                        t.resuelta = true; 
-                    }
+                    if (t.agenteReceptor.equals(receptor) && t.idClaveNecesaria.equals(cl.getIdentificador())) t.resuelta = true; 
                 }
             }
         }
 
-        // Auditoría final de lectura
+        // Si quedaron bloques cifrados que no pudieron abrirse ni enviarse a su destino.
         for (TareaDescifrado t : pendientes) {
             if (!t.resuelta) {
                 Vulnerabilidad vuln = new Vulnerabilidad(
                     "Fallo de Accesibilidad (Clave Inaccesible)", t.linea,
-                    "El agente " + t.agenteReceptor + " recibió un bloque cifrado con " + t.idClaveNecesaria + ", pero no la posee ni le fue distribuida en toda la sesión. Es incapaz de leerlo o reenviarlo a su destinatario."
+                    "El agente " + t.agenteReceptor + " recibió un bloque cifrado con " + t.idClaveNecesaria + " pero carece de la clave simétrica para acceder a él, inutilizando el flujo del protocolo."
                 );
-                vulnerabilidades.add(vuln);
-                p.registrarVulnerabilidad(vuln);
+                registrarVulnUnica(vulnerabilidades, p, vuln, t.linea);
             }
         }
-
-        return vulnerabilidades;
     }
 
+    // Orquestador principal que ejecuta secuencialmente todos los módulos de auditoría.
+    public boolean analizarEsSeguro(Protocolo p) {
+        List<Vulnerabilidad> vulnerabilidades = new ArrayList<>();
+        
+        evaluarFrescuraDeClaves(p, vulnerabilidades);
+        evaluarRiesgoReflexion(p, vulnerabilidades);
+        evaluarDesafioRespuesta(p, vulnerabilidades);
+        evaluarAutenticacionMutua(p, vulnerabilidades); 
+        evaluarClavesYSuplantacion(p, vulnerabilidades); 
+        
+        return p.isSeguro();
+    }
+
+    // Explora ciega y recursivamente un elemento extrayendo todas las estructuras de cifrado anidadas.
     private void extraerCifradosRecursivo(ElementoMensaje elemento, List<Cifrado> recolector) {
         if (elemento instanceof Cifrado c) {
             recolector.add(c);
-            for (ElementoMensaje hijo : c.getContenido()) {
-                extraerCifradosRecursivo(hijo, recolector); 
-            }
+            for (ElementoMensaje hijo : c.getContenido()) extraerCifradosRecursivo(hijo, recolector); 
         }
     }
 
+    // Verifica si un Nonce viaja protegido dentro de un bloque cifrado o circula en texto plano.
+    private String obtenerClaveEnvolvente(List<ElementoMensaje> componentes, String baseNonce) {
+        for (ElementoMensaje e : componentes) {
+            if (e instanceof Cifrado c) {
+                List<Nonce> noncesAqui = new ArrayList<>();
+                for (ElementoMensaje hijo : c.getContenido()) extraerNoncesRecursivo(hijo, noncesAqui);
+                boolean loContiene = noncesAqui.stream().anyMatch(n -> getBaseNonce(n.getIdentificador()).equals(baseNonce));
+                if (loContiene) return c.getClaveSello().getIdentificador();
+            }
+        }
+        return "PLANO"; 
+    }
+
+    // Extrae recursivamente todas las claves presentes en un elemento.
     private void extraerClavesRecursivo(ElementoMensaje elemento, List<Clave> recolector) {
         if (elemento instanceof Clave clave) {
             recolector.add(clave);
         } else if (elemento instanceof Cifrado cifrado) {
-            for (ElementoMensaje hijo : cifrado.getContenido()) {
-                extraerClavesRecursivo(hijo, recolector); 
-            }
+            for (ElementoMensaje hijo : cifrado.getContenido()) extraerClavesRecursivo(hijo, recolector); 
         }
     }
 
-    public boolean analizarEsSeguro(Protocolo p) {
-        evaluarFrescura(p);
-        evaluarDesafioRespuesta(p);
-        evaluarClavesYSuplantacion(p); 
-        
-        return p.isSeguro();
+    // Extrae recursivamente todos los Nonces presentes en un elemento.
+    private void extraerNoncesRecursivo(ElementoMensaje elemento, List<Nonce> recolector) {
+        if (elemento instanceof Nonce nonce) {
+            recolector.add(nonce);
+        } else if (elemento instanceof Cifrado bloqueCifrado) {
+            for (ElementoMensaje hijo : bloqueCifrado.getContenido()) extraerNoncesRecursivo(hijo, recolector);
+        }
+    }
+
+    // Comprueba si el identificador de un elemento contiene una mutación u operación matemática.
+    private boolean tieneOperacion(String identificador) {
+        return identificador.contains("+") || identificador.contains("-");
+    }
+
+    // Limpia operaciones aritméticas devolviendo la base de la variable 
+    private String getBaseNonce(String identificador) {
+        return identificador.split("[\\+\\-]", 2)[0].trim();
+    }
+
+    // Asegura que no se inserten vulnerabilidades idénticas en la misma línea para no ensuciar la salida.
+    private void registrarVulnUnica(List<Vulnerabilidad> lista, Protocolo p, Vulnerabilidad v, int linea) {
+        boolean duplicada = lista.stream().anyMatch(existente -> 
+            existente.getLineaAfectada() == linea && existente.getTipoAtaque().equals(v.getTipoAtaque())
+        );
+        if(!duplicada) {
+            lista.add(v);
+            p.registrarVulnerabilidad(v);
+        }
+    }
+
+    // Localiza el índice posicional exacto de un nonce dentro del array de un bloque cifrado.     
+    private int obtenerPosicionNonce(Cifrado c, String baseNonce) {
+        for (int i = 0; i < c.getContenido().size(); i++) {
+            List<Nonce> noncesEnHijo = new ArrayList<>();
+            extraerNoncesRecursivo(c.getContenido().get(i), noncesEnHijo);
+            for(Nonce n : noncesEnHijo) {
+                if (getBaseNonce(n.getIdentificador()).equals(baseNonce)) return i;
+            }
+        }
+        return -1;
+    }
+
+    //  Navega por el árbol de componentes del mensaje y solo extrae las claves si el agente 
+    // demuestra poseer la llave que abre el cifrado envolvente
+    private void adquirirConocimientoRecursivo(ElementoMensaje elemento, String agente, Set<String> conocimientos, List<Clave> recolector) {
+        if (elemento instanceof Clave clave) {
+            recolector.add(clave);
+            conocimientos.add(clave.getIdentificador());
+        } else if (elemento instanceof Cifrado cifrado) {
+            String idSello = cifrado.getClaveSello().getIdentificador();
+            boolean puedeAbrir = agente.equalsIgnoreCase("KDC") || agente.equalsIgnoreCase("S") || agente.equalsIgnoreCase("T") ||
+                                 idSello.toLowerCase().contains(agente.toLowerCase()) ||
+                                 conocimientos.contains(idSello);
+
+            if (puedeAbrir) {
+                for (ElementoMensaje hijo : cifrado.getContenido()) {
+                    adquirirConocimientoRecursivo(hijo, agente, conocimientos, recolector);
+                }
+            }
+        }
     }
 }
