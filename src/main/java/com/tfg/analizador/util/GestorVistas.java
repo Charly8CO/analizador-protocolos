@@ -16,7 +16,7 @@ public class GestorVistas {
 
     private static Stage escenarioPrincipal;
 
-    public enum TipoPantalla { LOGIN, REGISTRO, DASHBOARD, ANALIZADOR, DESCONOCIDA, PERFIL, GUIA }
+    public enum TipoPantalla { LOGIN, REGISTRO, DASHBOARD, ANALIZADOR, DESCONOCIDA, PERFIL, GUIA, RECUPERAR_PASS }
     private static TipoPantalla pantallaActual = TipoPantalla.DESCONOCIDA;
     private static TipoPantalla pantallaAnterior = TipoPantalla.DESCONOCIDA;
 
@@ -110,6 +110,11 @@ public class GestorVistas {
         pantallaAnterior = pantallaActual; // <-- Memorizamos de dónde venimos
         pantallaActual = TipoPantalla.GUIA;
         cambiarEscena("/com/tfg/analizador/VistaGuia.fxml", "TFG - Guía de Usuario");
+    }
+
+    public static void irARecuperarPass() {
+        pantallaActual = TipoPantalla.RECUPERAR_PASS;
+        cambiarEscena("/com/tfg/analizador/VistaRecuperarPass.fxml", "TFG - Recuperar Contraseña");
     }
 
     private static void cambiarEscena(String rutaFXML, String titulo) {

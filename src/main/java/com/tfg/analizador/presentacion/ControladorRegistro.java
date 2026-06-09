@@ -2,6 +2,7 @@ package com.tfg.analizador.presentacion;
 
 import com.tfg.analizador.logica.GestorUsuarios;
 import com.tfg.analizador.util.GestorVistas;
+import com.tfg.analizador.util.ServicioEmail;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,81 +11,182 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 
+/**
+ * Controlador para la gestión del registro de nuevos usuarios.
+ * Implementa un flujo de dos pasos: (1) Formulario y (2) Verificación SMTP.
+ */
 public class ControladorRegistro {
 
-    @FXML
-    private TextField txtEmail;
+    // --- Elementos de la Fase 1 (Formulario) ---
+    @FXML private VBox cajaFormulario;
+    @FXML private TextField txtEmail;
+    @FXML private PasswordField txtPass;
+    @FXML private PasswordField txtConfirmarPass;
+    @FXML private Button btnRegistrar;
 
-    @FXML
-    private PasswordField txtPass;
+    // --- Elementos de la Fase 2 (Verificación) ---
+    @FXML private VBox cajaVerificacion;
+    @FXML private TextField txtCodigo;
+    @FXML private Button btnVerificar;
 
-    @FXML
-    private PasswordField txtConfirmarPass;
+    @FXML private Label lblError;
 
-    @FXML
-    private Button btnRegistrar;
+    // Variables temporales para mantener el estado del usuario en proceso de registro
+    private String codigoGeneradoTemp;
+    private String emailPendienteTemp;
+    private String passPendienteTemp;
 
+    /**
+     * Valida el formulario de registro y dispara el envío del código de verificación (RF1.1).
+     * AÑADIDO: 'public' para evitar bloqueos de JavaFX Reflection.
+     */
     @FXML
-    private Label lblError;
+    public void handleRegistrarAction(ActionEvent event) {
+        limpiarEstilosMensaje();
 
-    @FXML
-    void handleRegistrarAction(ActionEvent event) {
-        // Limpia los errores anteriores
-        lblError.setText("");
-        lblError.getStyleClass().remove("mensaje-exito");
-        if (!lblError.getStyleClass().contains("mensaje-error")) {
-            lblError.getStyleClass().add("mensaje-error");
-        }
-
-        // Tomamos los datos
         String email = txtEmail.getText().trim();
         String pass = txtPass.getText();
         String passConf = txtConfirmarPass.getText();
 
-        // Error para cuando hay campos vacios
         if (email.isEmpty() || pass.isEmpty() || passConf.isEmpty()) {
-            lblError.setText("Todos los campos son obligatorios");
+            mostrarError("Todos los campos son obligatorios");
             return;
         }
 
-        //Error para cuando el formato del email no es correcto
         String regexEmail = "^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$";
         if (!email.matches(regexEmail)) {
-            lblError.setText("El formato de email es incorrecto");
+            mostrarError("El formato de email es incorrecto");
             return;
         }
 
-        // Error de diferentes contraseñas
         if (!pass.equals(passConf)) {
-            lblError.setText("Las contraseñas no coinciden");
+            mostrarError("Las contraseñas no coinciden");
             return;
         }
 
-        // Delegamos TODA la lógica de negocio a la capa correspondiente
-        try {
-            GestorUsuarios logicaUsuarios = new GestorUsuarios();
-            logicaUsuarios.registrarNuevoUsuario(email, pass);
+        // Bloqueamos la interfaz para evitar interacciones concurrentes durante la espera del servidor SMTP
+        btnRegistrar.setDisable(true);
+        btnRegistrar.setText("Enviando correo, espera...");
+        txtEmail.setDisable(true);
+        txtPass.setDisable(true);
+        txtConfirmarPass.setDisable(true);
+        mostrarExito("Conectando con el servidor de correo...");
 
-            // Si no hay excepciones, el registro fue un éxito
-            lblError.getStyleClass().remove("mensaje-error");
-            lblError.getStyleClass().add("mensaje-exito");
-            lblError.setText("¡Cuenta creada con éxito!");
+        codigoGeneradoTemp = ServicioEmail.generarCodigo();
+        emailPendienteTemp = email;
+        passPendienteTemp = pass;
 
-            txtEmail.clear();
-            txtPass.clear();
-            txtConfirmarPass.clear();
+        // Ejecución en segundo plano para no congelar el Hilo Principal (UI Thread)
+        new Thread(() -> {
+            try {
+                ServicioEmail.enviarCodigoVerificacion(emailPendienteTemp, codigoGeneradoTemp);
 
-        } catch (Exception e) {
-            // Capturamos el mensaje traducido desde la capa lógica y lo mostramos
-            lblError.getStyleClass().remove("mensaje-exito");
-            lblError.getStyleClass().add("mensaje-error");
-            lblError.setText(e.getMessage());
+                // Volvemos al Hilo Principal para realizar cambios en la vista
+                javafx.application.Platform.runLater(() -> {
+                    cambiarAVistaVerificacion();
+                    mostrarExito("Se ha enviado un código a tu correo.");
+                    // Restauramos campos por si el usuario vuelve atrás
+                    btnRegistrar.setDisable(false);
+                    btnRegistrar.setText("Registrarse");
+                    txtEmail.setDisable(false);
+                    txtPass.setDisable(false);
+                    txtConfirmarPass.setDisable(false);
+                });
+
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> {
+                    mostrarError("Error SMTP: " + e.getMessage());
+                    btnRegistrar.setDisable(false);
+                    btnRegistrar.setText("Registrarse");
+                    txtEmail.setDisable(false);
+                    txtPass.setDisable(false);
+                    txtConfirmarPass.setDisable(false);
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Valida el código introducido y, de ser correcto, registra al usuario en la base de datos.
+     * AÑADIDO: 'public'.
+     */
+    @FXML
+    public void handleVerificarAction(ActionEvent event) {
+        limpiarEstilosMensaje();
+        String codigoIntroducido = txtCodigo.getText().trim();
+
+        if (codigoIntroducido.equals(codigoGeneradoTemp)) {
+            try {
+                GestorUsuarios logicaUsuarios = new GestorUsuarios();
+                logicaUsuarios.registrarNuevoUsuario(emailPendienteTemp, passPendienteTemp);
+
+                // Visualización de éxito
+                mostrarExito("¡Verificación completada! Cuenta creada con éxito.");
+                
+                // Ocultamos la caja de texto donde se escribió el código
+                txtCodigo.setVisible(false);
+                txtCodigo.setManaged(false);
+                
+                // Transformamos el botón existente en una pasarela al Login
+                btnVerificar.setText("Ir a Iniciar Sesión");
+                btnVerificar.setStyle("-fx-background-color: #2980B9; -fx-text-fill: white; -fx-font-weight: bold;");
+                
+                // Sobrescribimos su acción para que al pulsarlo te lleve al Login
+                btnVerificar.setOnAction(e -> GestorVistas.irALogin());
+                
+                // Ocultamos el último elemento del VBox (el enlace de "Cancelar")
+                int ultimoIndice = cajaVerificacion.getChildren().size() - 1;
+                if (ultimoIndice >= 0) {
+                    cajaVerificacion.getChildren().get(ultimoIndice).setVisible(false);
+                    cajaVerificacion.getChildren().get(ultimoIndice).setManaged(false);
+                }
+
+            } catch (Exception e) {
+                mostrarError(e.getMessage()); 
+            }
+        } else {
+            mostrarError("El código es incorrecto.");
         }
     }
 
     @FXML
-    void handleVolverLogin(MouseEvent event) {
+    public void handleCancelarVerificacion(MouseEvent event) {
+        cajaVerificacion.setVisible(false);
+        cajaVerificacion.setManaged(false);
+        cajaFormulario.setVisible(true);
+        cajaFormulario.setManaged(true);
+        txtCodigo.clear();
+        limpiarEstilosMensaje();
+    }
+
+    @FXML
+    public void handleVolverLogin(MouseEvent event) {
         GestorVistas.irALogin();
+    }
+
+    private void mostrarError(String mensaje) {
+        lblError.getStyleClass().remove("mensaje-exito");
+        if (!lblError.getStyleClass().contains("mensaje-error")) lblError.getStyleClass().add("mensaje-error");
+        lblError.setText(mensaje);
+    }
+
+    private void mostrarExito(String mensaje) {
+        lblError.getStyleClass().remove("mensaje-error");
+        if (!lblError.getStyleClass().contains("mensaje-exito")) lblError.getStyleClass().add("mensaje-exito");
+        lblError.setText(mensaje);
+    }
+
+    private void limpiarEstilosMensaje() {
+        lblError.setText("");
+        lblError.getStyleClass().removeAll("mensaje-exito", "mensaje-error");
+    }
+
+    private void cambiarAVistaVerificacion() {
+        cajaFormulario.setVisible(false);
+        cajaFormulario.setManaged(false);
+        cajaVerificacion.setVisible(true);
+        cajaVerificacion.setManaged(true);
     }
 }

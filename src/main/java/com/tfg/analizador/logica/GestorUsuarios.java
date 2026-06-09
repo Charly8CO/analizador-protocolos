@@ -47,4 +47,24 @@ public class GestorUsuarios {
         return usuarioBD;
 
     }
+
+    public boolean existeUsuario(String email) throws Exception {
+        GestorBBDD gestor = new GestorBBDD();
+        return gestor.obtenerUsuarioEmail(email) != null;
+    }
+
+    public void actualizarContrasena(String email, String nuevaContraPlana) throws Exception {
+        GestorBBDD gestor = new GestorBBDD();
+        Usuario u = gestor.obtenerUsuarioEmail(email);
+        
+        if (u == null) throw new Exception("El usuario no está registrado.");
+        
+        String hashSeguro = BCrypt.hashpw(nuevaContraPlana, BCrypt.gensalt());
+        
+        boolean actualizado = gestor.actualizarPassword(u.getIdUsuario(), hashSeguro);
+        
+        if (!actualizado) {
+            throw new Exception("Error crítico: No se pudo guardar la contraseña en la Base de Datos.");
+        }
+    }
 }

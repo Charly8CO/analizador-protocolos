@@ -37,6 +37,15 @@
                   </Label>
                   <PasswordField fx:id="txtPass" promptText ="***********" styleClass="password-field" />
 
+                  <HBox alignment="CENTER_RIGHT">
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin>
+                     <children>
+                        <Label onMouseClicked="#handleRecuperarPassAction" styleClass="link-label" text="¿Has olvidado tu contraseña? Pulsa aquí" style="-fx-text-fill: #2980B9; -fx-underline: true; -fx-cursor: hand; -fx-font-size: 12px;"/>
+                     </children>
+                  </HBox>
+
                   <VBox alignment="CENTER">
                      <VBox.margin><Insets top="15.0" /></VBox.margin>
                      <children>

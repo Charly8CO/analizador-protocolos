@@ -29,7 +29,7 @@ public class ControladorLogin {
     @FXML
     private Label lblError;
 
-    //Metodos que harán los botones
+    // Metodos que harán los botones
     @FXML
     void handleConfirmarAction(ActionEvent event) {
 
@@ -82,5 +82,11 @@ public class ControladorLogin {
 
         GestorVistas.irARegistro();
 
+    }
+
+    // Manda a la pestaña de recuperar contraseña
+    @FXML
+    public void handleRecuperarPassAction(javafx.scene.input.MouseEvent event) {
+        GestorVistas.irARecuperarPass();
     }
 }

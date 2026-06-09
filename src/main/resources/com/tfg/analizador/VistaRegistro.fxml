@@ -20,10 +20,17 @@
                   <Label styleClass="title-label" text="Registrar cuenta" />
                </children>
             </VBox>
+
+            <VBox alignment="CENTER">
+               <VBox.margin><Insets top="15.0" /></VBox.margin>
+               <children>
+                  <Label fx:id="lblError" styleClass="mensaje-error" text="" wrapText="true" textAlignment="CENTER" />
+               </children>
+            </VBox>
             
-            <VBox spacing="10.0">
+            <VBox fx:id="cajaFormulario" spacing="10.0">
                <padding>
-                  <Insets bottom="30.0" left="40.0" right="40.0" top="20.0" />
+                  <Insets bottom="30.0" left="40.0" right="40.0" top="10.0" />
                </padding>
                <children>
                   
@@ -40,15 +47,8 @@
                   </Label>
                   <PasswordField fx:id="txtConfirmarPass" promptText="***********" styleClass="password-field" />
                   
-                  <VBox alignment="CENTER">
-                     <VBox.margin><Insets top="15.0" /></VBox.margin>
-                     <children>
-                        <Label fx:id="lblError" styleClass="mensaje-error" text="" />
-                     </children>
-                  </VBox>
-                  
                   <HBox alignment="CENTER_RIGHT">
-                     <VBox.margin><Insets bottom="20.0" top="5.0" /></VBox.margin>
+                     <VBox.margin><Insets bottom="20.0" top="15.0" /></VBox.margin>
                      <children>
                         <Button fx:id="btnRegistrar" onAction="#handleRegistrarAction" styleClass="button-confirm" text="Registrarse" />
                      </children>
@@ -60,6 +60,29 @@
                      </children>
                   </HBox>
                   
+               </children>
+            </VBox>
+
+            <VBox fx:id="cajaVerificacion" spacing="10.0" visible="false" managed="false">
+               <padding>
+                  <Insets bottom="30.0" left="40.0" right="40.0" top="10.0" />
+               </padding>
+               <children>
+                  <Label styleClass="label" text="Código de Verificación (6 dígitos)" />
+                  <TextField fx:id="txtCodigo" promptText="Ej: 123456" styleClass="text-field" />
+                  
+                  <HBox alignment="CENTER_RIGHT">
+                     <VBox.margin><Insets bottom="20.0" top="15.0" /></VBox.margin>
+                     <children>
+                        <Button fx:id="btnVerificar" onAction="#handleVerificarAction" styleClass="button-confirm" text="Verificar y Crear Cuenta" />
+                     </children>
+                  </HBox>
+                  
+                  <HBox alignment="CENTER_LEFT">
+                     <children>
+                        <Label onMouseClicked="#handleCancelarVerificacion" styleClass="link-label" text="&lt; Cancelar y corregir correo" />
+                     </children>
+                  </HBox>
                </children>
             </VBox>
             
