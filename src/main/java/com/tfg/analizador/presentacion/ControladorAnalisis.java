@@ -192,8 +192,13 @@ public class ControladorAnalisis {
         }
 
         try {
-            // Delegamos la validación, compilación, análisis y registro BBDD condicional
             ServicioAnalisis servicio = new ServicioAnalisis();
+
+            // Antes de procesar el protocolo, forzamos la sobreescritura física 
+            // del archivo para así guardar lo actualizado.
+            servicio.guardarProtocolo(archivo, textoUsuario); 
+
+            // Delegamos la validación, compilación, análisis y registro BBDD condicional
             Protocolo protocoloProcesado = servicio.procesarYGuardarProtocolo(textoUsuario, archivo);
 
             // Guardamos el objeto en memoria para el PDF
@@ -259,7 +264,7 @@ public class ControladorAnalisis {
 
         File archivoDestino = this.archivoActual;
 
-        // MODIFICADO: Si el archivo se ha borrado en local, forzamos un Guardar Como
+        // Si el archivo se ha borrado en local, forzamos un Guardar Como
         if (archivoDestino != null && !archivoDestino.exists()) {
             GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado", "El archivo físico ya no se encuentra en su ruta original. Por seguridad, selecciona una nueva ubicación para guardar los cambios.", "Entendido");
             archivoDestino = null;
