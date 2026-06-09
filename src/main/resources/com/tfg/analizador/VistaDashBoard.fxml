@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -31,29 +32,25 @@
                      <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                      </padding>
-                     <Label text="Estadísticas" alignment="CENTER" maxWidth="Infinity">
+                     <Label text="Resumen Global" alignment="CENTER" maxWidth="Infinity">
                            <font><Font name="System Bold" size="14.0" /></font>
                      </Label>
-                     <Label text="Número de protocolos seguros: 2" />
-                     <Label text="Número de vulnerabilidades encontradas: 9" />
-                     <Label text="Estadística extra..." />
+                     <Label fx:id="lblProtocolosSeguros" text="Cargando..." />
+                     <Label fx:id="lblTotalVulnerabilidades" text="Cargando..." />
+                     <Label fx:id="lblTotalAnalisis" text="Cargando..." />
                   </VBox>
 
                   <VBox spacing="20.0" styleClass="borde-oscuro-2px" VBox.vgrow="ALWAYS">
                      <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                      </padding>
-                     <Label text="Gráficas" alignment="CENTER" maxWidth="Infinity">
+                     <Label text="Estadísticas Visuales" alignment="CENTER" maxWidth="Infinity">
                            <font><Font name="System Bold" size="14.0" /></font>
                      </Label>
                      
-                     <HBox spacing="30.0" alignment="CENTER" VBox.vgrow="ALWAYS">
-                           <VBox alignment="CENTER" prefWidth="150" prefHeight="100" styleClass="borde-oscuro-2px">
-                              <Label text="Grafico1" />
-                           </VBox>
-                           <VBox alignment="CENTER" prefWidth="150" prefHeight="100" styleClass="borde-oscuro-2px">
-                              <Label text="Grafico2" />
-                           </VBox>
+                     <HBox spacing="10.0" alignment="CENTER" VBox.vgrow="ALWAYS">
+                           <PieChart fx:id="graficoSeguridad" prefHeight="250" prefWidth="250" legendVisible="false"/>
+                           <PieChart fx:id="graficoTiposVuln" prefHeight="250" prefWidth="300" legendVisible="false" />
                      </HBox>
                   </VBox>
                </VBox>
@@ -75,7 +72,7 @@
                      <TableView fx:id="tablaProtocolos" VBox.vgrow="ALWAYS" styleClass="tabla-con-borde">
                            <columns>
                               <TableColumn fx:id="colNombre" prefWidth="250.0" text="Nombre del Protocolo" />
-                              <TableColumn fx:id="colAcciones" prefWidth="200.0" text="Acciones" />
+                              <TableColumn fx:id="colAcciones" prefWidth="240.0" text="Acciones" />
                            </columns>
                            <columnResizePolicy>
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

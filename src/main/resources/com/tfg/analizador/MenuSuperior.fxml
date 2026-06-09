@@ -9,17 +9,20 @@
         <Menu text="Archivos">
             <items>
                 <MenuItem text="Nuevo protocolo" onAction="#handleNuevoProtocolo" />
-                <MenuItem text="Historial de Protocolos" />
+                
+                <MenuItem text="Importar (abrir) protocolo" onAction="#handleImportarProtocolo" />
+                
+                <MenuItem text="Pestaña pricipal" onAction="#handleVolverPrincipal" />
             </items>
         </Menu>
         <Menu text="Herramientas">
             <items>
-                <MenuItem text="Preferencias" />
+                <MenuItem text="Guía" onAction="#handleMostrarGuia" />
             </items>
         </Menu>
         <Menu text="Cuenta">
             <items>
-                <MenuItem text="Ver Perfil" />
+                <MenuItem text="Ver Perfil" onAction="#handleVerPerfil" />
             </items>
         </Menu>
         <Menu text="Sesión">
