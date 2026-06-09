@@ -27,6 +27,47 @@ public class ServicioAnalisis {
         return p;
     }
 
+    // Método integrador que orquesta todo el flujo (Analizar + Local condicional + BD adaptativo)
+    public Protocolo procesarYGuardarProtocolo(String textoPlano, File archivo) throws Exception {
+        AnalizadorLexico analizador = new AnalizadorLexico();
+        MotorAnalisis motor = new MotorAnalisis();
+        
+        // Compilación usando el nombre real del archivo
+        Protocolo p = analizador.compilarProtocolo(archivo.getName(), textoPlano);
+        
+        // Analizar (carga las vulnerabilidades en memoria dentro del objeto 'p')
+        motor.analizarEsSeguro(p);
+        
+        Usuario usuarioActivo = GestorSesion.getInstancia().getUsuarioActivo();
+        if (usuarioActivo == null) {
+            throw new Exception("No hay un usuario activo en la sesión para guardar el historial.");
+        }
+        
+        // Verificamos si ya existe el archivo en el historial SQLite.
+        // Si no existe, procedemos al guardado local automático inicial.
+        int idExistente = GestorBBDD.obtenerIdProtocoloPorNombre(usuarioActivo.getIdUsuario(), archivo.getName());
+        boolean esPrimeraVez = (idExistente == -1);
+
+        if (esPrimeraVez) {
+            // Guardado en el disco local SOLO si es la primera vez (no está en la BD)
+            Files.writeString(archivo.toPath(), textoPlano);
+            System.out.println("[LOCAL] Guardado automático inicial creado en: " + archivo.getName());
+        } else {
+            // Se omite la escritura en disco duro si ya se encuentra registrado el elemento
+            System.out.println("[LOCAL] El protocolo ya existe en el historial. Se salta la escritura física.");
+        }
+
+        // Registro completo en la base de datos
+        GestorBBDD gestor = new GestorBBDD();
+        boolean exito = gestor.guardarHistorial(usuarioActivo, p, archivo.getAbsolutePath());
+
+        if (!exito) {
+            throw new Exception("El archivo se analizó correctamente, pero falló la actualización del historial en SQLite.");
+        }
+        
+        return p;
+    }
+
     public void guardarProtocolo(File archivo, String contenido) throws Exception {
         // Guardado en local
         Files.writeString(archivo.toPath(), contenido);
@@ -36,9 +77,8 @@ public class ServicioAnalisis {
         Usuario usuarioActivo = GestorSesion.getInstancia().getUsuarioActivo();
         
         if (usuarioActivo != null) {
-           
-            // Insertamos el registro sin los nullables
-            boolean exito = GestorBBDD.insertarProtocolo(
+            // Usamos la actualización inteligente en vez de inserción duplicada
+            boolean exito = GestorBBDD.registrarGuardadoManual(
                 usuarioActivo.getIdUsuario(), 
                 archivo.getName(), 
                 archivo.getAbsolutePath()
@@ -47,9 +87,8 @@ public class ServicioAnalisis {
             if (!exito) {
                 throw new Exception("El archivo se guardó en el disco local, pero hubo un error al registrarlo en el historial de la base de datos.");
             } else {
-                System.out.println("Registrando en SQLite: " + archivo.getName() + " para el usuario " + usuarioActivo.getNombreUsuario());
+                System.out.println("Guardado registrado en SQLite: " + archivo.getName() + " para el usuario " + usuarioActivo.getNombreUsuario());
             }
         }
     }
-    
 }

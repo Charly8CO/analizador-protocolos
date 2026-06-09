@@ -9,6 +9,7 @@ public class Protocolo {
     private String nombreProtocolo;
     private Date fechaAnalisis;
     private boolean seguro;
+    private String rutaArchivo; 
     
     // Contenedores de datos
     private List<Mensaje> mensajes;
@@ -18,7 +19,7 @@ public class Protocolo {
     public Protocolo(String nombreProtocolo) {
         this.nombreProtocolo = nombreProtocolo;
         this.fechaAnalisis = new Date();
-        this.seguro = true; // Asumimos que es seguro al nacer
+        this.seguro = true;
         this.mensajes = new ArrayList<>();
         this.agentes = new ArrayList<>();
         this.vulnerabilidades = new ArrayList<>();
@@ -45,6 +46,7 @@ public class Protocolo {
     public String getNombreProtocolo() { return nombreProtocolo; }
     public Date getFechaAnalisis() { return fechaAnalisis; }
     public boolean isSeguro() { return seguro; }
+    public String getRutaArchivo() { return rutaArchivo; } // NUEVO
     public List<Mensaje> getMensajes() { return mensajes; }
     public List<Agente> getAgentes() { return agentes; }
     public List<Vulnerabilidad> getVulnerabilidades() { return vulnerabilidades; }
@@ -54,4 +56,5 @@ public class Protocolo {
     public void setNombreProtocolo(String nombreProtocolo) { this.nombreProtocolo = nombreProtocolo; }
     public void setFechaAnalisis(Date fechaAnalisis) { this.fechaAnalisis = fechaAnalisis; }
     public void setSeguro(boolean seguro) { this.seguro = seguro; }
+    public void setRutaArchivo(String rutaArchivo) { this.rutaArchivo = rutaArchivo; } // NUEVO
 }

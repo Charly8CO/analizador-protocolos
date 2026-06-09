@@ -64,6 +64,10 @@
                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                     </columnResizePolicy>
                 </TableView>
+
+                <Button onAction="#handleGenerarInforme" maxWidth="Infinity" text="Generar Informe" styleClass="boton-accion-verde" prefHeight="40.0">
+                    <font><Font name="System Bold" size="14.0" /></font>
+                </Button>
             </VBox>
 
         </HBox>

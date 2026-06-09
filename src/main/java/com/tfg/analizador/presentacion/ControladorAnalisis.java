@@ -7,9 +7,11 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
+import com.tfg.analizador.logica.GestorSesion;
 import com.tfg.analizador.logica.ServicioAnalisis;
 import com.tfg.analizador.modelo.Protocolo;
 import com.tfg.analizador.modelo.Vulnerabilidad;
+import com.tfg.analizador.persistencia.GestorArchivos;
 import com.tfg.analizador.util.GestorDialogos;
 
 import javafx.collections.FXCollections;
@@ -46,6 +48,10 @@ public class ControladorAnalisis {
     private TableColumn<Vulnerabilidad, String> colVulnDesc;
 
     private CodeArea editorProtocolo;
+
+    private File archivoActual = null;
+    
+    private Protocolo ultimoProtocoloAnalizado = null;
 
     @FXML
     public void initialize() {
@@ -96,7 +102,6 @@ public class ControladorAnalisis {
                         setGraphic(null);
                     } else {
                         text.setText(item);
-                        // Restamos unos píxeles de padding para que no se pegue al borde
                         text.wrappingWidthProperty().bind(colVulnNombre.widthProperty().subtract(10));
                         setGraphic(text);
                     }
@@ -104,6 +109,14 @@ public class ControladorAnalisis {
             };
             return cell;
         });
+    }
+
+    // Permite que otros controladores inyecten texto importado
+    public void cargarTextoEnEditor(String texto, File archivoAsociado) {
+        editorProtocolo.replaceText(texto);
+        this.archivoActual = archivoAsociado;
+        this.ultimoProtocoloAnalizado = null; // Reseteamos análisis al cargar uno nuevo
+        tablaVulnerabilidades.getItems().clear();
     }
 
     @FXML
@@ -123,7 +136,6 @@ public class ControladorAnalisis {
         });
     }
 
-    // Ahora este botón solo valida la sintaxis léxica.No hace cálculos criptográficos ni rellena la tabla.
     @FXML
     void handleValidarSintaxis(ActionEvent event) {
         String textoUsuario = editorProtocolo.getText();
@@ -143,8 +155,6 @@ public class ControladorAnalisis {
         }
     }
 
-    // Este botón ejecuta tanto el validador léxico como el motor de 
-    // seguridad, volcando los resultados finales en la interfaz.
     @FXML
     void handleAnalizarProtocolo(ActionEvent event) {
         String textoUsuario = editorProtocolo.getText();
@@ -154,33 +164,87 @@ public class ControladorAnalisis {
             return;
         }
 
-        try {
-            // Delegamos la validación y compilación a la capa de servicios lógicos
-            ServicioAnalisis servicio = new ServicioAnalisis();
-            Protocolo protocoloProcesado = servicio.procesarNuevoProtocolo(textoUsuario);
+        File archivo = this.archivoActual;
 
-            // Actualizamos la interfaz visual
-            actualizarListaActores(protocoloProcesado);
+        // Comprobación de integridad del archivo para evitar pérdida de trabajo en memoria
+        if (archivo != null && !archivo.exists()) {
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado", "El archivo de este análisis ha sido borrado o movido de su ubicación original. Para no perder tu progreso, deberás guardarlo en una nueva ruta.", "Entendido");
+            archivo = null; // Esto fuerza la apertura del FileChooser
+        }
+
+        if (archivo == null) {
+            FileChooser selector = new FileChooser();
+            selector.setTitle("Guardar Protocolo para Analizar");
+            selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
             
-            // Volcamos la lista de vulnerabilidades a un formato observable que JavaFX entiende
-            ObservableList<Vulnerabilidad> data = FXCollections.observableArrayList(protocoloProcesado.getVulnerabilidades());
+            archivo = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
 
-            // Al inyectar la data ahora, las columnas (gracias al PropertyValueFactory) sabrán qué mostrar
+            if (archivo == null) {
+                GestorDialogos.mostrarConfirmacionEstandar(
+                    "Análisis Cancelado", 
+                    "Guardado Obligatorio", 
+                    "Debes guardar el archivo en tu equipo para poder realizar el análisis y registrar los fallos en el historial.", 
+                    "Aceptar"
+                );
+                return; 
+            }
+            this.archivoActual = archivo;
+        }
+
+        try {
+            // Delegamos la validación, compilación, análisis y registro BBDD condicional
+            ServicioAnalisis servicio = new ServicioAnalisis();
+            Protocolo protocoloProcesado = servicio.procesarYGuardarProtocolo(textoUsuario, archivo);
+
+            // Guardamos el objeto en memoria para el PDF
+            this.ultimoProtocoloAnalizado = protocoloProcesado;
+
+            actualizarListaActores(protocoloProcesado);
+            ObservableList<Vulnerabilidad> data = FXCollections.observableArrayList(protocoloProcesado.getVulnerabilidades());
             tablaVulnerabilidades.setItems(data);
 
-            // Mantenemos el feedback visual intacto
             if (protocoloProcesado.isSeguro()) {
-                GestorDialogos.mostrarConfirmacionEstandar("Análisis Finalizado", "Protocolo Seguro", "No se han detectado fallos lógicos. El diseño es robusto.", "Aceptar");
+                GestorDialogos.mostrarConfirmacionEstandar("Análisis Finalizado", "Protocolo Seguro", "El documento se ha procesado. No se han detectado fallos lógicos. El diseño es robusto.", "Aceptar");
             } else {
                 GestorDialogos.mostrarConfirmacionEstandar(
                     "Análisis Finalizado", 
                     "Vulnerabilidades Detectadas", 
-                    "El motor ha encontrado " + protocoloProcesado.getVulnerabilidades().size() + " brechas de seguridad. Revisa la tabla lateral para más detalles.", 
+                    "El documento se ha procesado.\n\nEl motor ha encontrado " + protocoloProcesado.getVulnerabilidades().size() + " brechas de seguridad. Revisa la tabla lateral para más detalles.", 
                     "Aceptar");
             }
         } catch (Exception e) {
-            // Mostramos el mensaje de la excepción (errores léxicos o sintácticos que paren la compilación)
-            GestorDialogos.mostrarConfirmacionEstandar("Error de Compilación", "No se puede analizar", e.getMessage(), "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Error en el Proceso", "No se puede completar", e.getMessage(), "Aceptar");
+        }
+    }
+
+    // Genera el informe PDF utilizando iText y nuestro GestorArchivos.
+    @FXML
+    void handleGenerarInforme(ActionEvent event) {
+        if (ultimoProtocoloAnalizado == null) {
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Sin Análisis", "Debes analizar el protocolo antes de poder generar un informe PDF.", "Aceptar");
+            return;
+        }
+
+        FileChooser selector = new FileChooser();
+        selector.setTitle("Guardar Informe PDF");
+        selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf"));
+        selector.setInitialFileName(ultimoProtocoloAnalizado.getNombreProtocolo() + "_Informe.pdf");
+        
+        File archivoPdf = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
+
+        if (archivoPdf != null) {
+            try {
+                GestorArchivos gestor = new GestorArchivos();
+                com.tfg.analizador.modelo.Usuario usuarioActivo = GestorSesion.getInstancia().getUsuarioActivo();
+                String textoActual = editorProtocolo.getText();
+
+                // Delegamos la creación del PDF a nuestro gestor
+                gestor.generarInformePDF(ultimoProtocoloAnalizado, archivoPdf.getAbsolutePath(), textoActual, usuarioActivo);
+                
+                GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Informe Generado", "El informe PDF se ha exportado correctamente.", "Aceptar");
+            } catch (Exception e) {
+                GestorDialogos.mostrarConfirmacionEstandar("Error", "Error al generar PDF", e.getMessage(), "Aceptar");
+            }
         }
     }
 
@@ -193,24 +257,37 @@ public class ControladorAnalisis {
             return;
         }
 
-        // Configuramos el selector de archivos
-        FileChooser selector = new FileChooser();
-        selector.setTitle("Guardar Protocolo");
-        selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
-        
-        // Abrimos la ventana de guardado
-        File archivo = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
+        File archivoDestino = this.archivoActual;
 
-        if (archivo != null) {
-            try {
-                ServicioAnalisis servicio = new ServicioAnalisis();
-                // Delegamos el guardado físico y en BBDD
-                servicio.guardarProtocolo(archivo, texto);
-                
-                GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Protocolo Guardado", "El archivo se ha guardado correctamente en: " + archivo.getName(), "Aceptar");
-            } catch (Exception e) {
-                GestorDialogos.mostrarConfirmacionEstandar("Error", "Error al guardar", e.getMessage(), "Aceptar");
+        // MODIFICADO: Si el archivo se ha borrado en local, forzamos un Guardar Como
+        if (archivoDestino != null && !archivoDestino.exists()) {
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado", "El archivo físico ya no se encuentra en su ruta original. Por seguridad, selecciona una nueva ubicación para guardar los cambios.", "Entendido");
+            archivoDestino = null;
+        }
+
+        // Si es nuevo o el original desapareció, solicitamos ruta
+        if (archivoDestino == null) {
+            FileChooser selector = new FileChooser();
+            selector.setTitle("Guardar Protocolo");
+            selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
+            
+            archivoDestino = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
+            
+            if (archivoDestino == null) {
+                return; // Guardado cancelado por el usuario
             }
+        }
+
+        try {
+            ServicioAnalisis servicio = new ServicioAnalisis();
+            servicio.guardarProtocolo(archivoDestino, texto);
+            
+            // Actualizamos la sesión en memoria
+            this.archivoActual = archivoDestino;
+            
+            GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Protocolo Guardado", "El archivo se ha guardado y actualizado en la base de datos de manera correcta.", "Aceptar");
+        } catch (Exception e) {
+            GestorDialogos.mostrarConfirmacionEstandar("Error", "Error al guardar", e.getMessage(), "Aceptar");
         }
     }
 
@@ -226,18 +303,17 @@ public class ControladorAnalisis {
         if (confirmar) {
             editorProtocolo.clear();
             listaActores.getItems().clear();
-            listaActores.getItems().add("KDC"); // Mantenemos el KDC por defecto
+            listaActores.getItems().add("KDC"); 
             tablaVulnerabilidades.getItems().clear();
+            this.archivoActual = null;
+            this.ultimoProtocoloAnalizado = null; 
         }
     }
 
     private void actualizarListaActores(Protocolo protocolo) {
-        // KDC es obligatorio, este if hace que no se duplique
         if (!listaActores.getItems().contains("KDC")) {
             listaActores.getItems().add("KDC"); 
         }
-        
-        // Los actores del texto se añaden si no existen en la interfaz visual
         for (com.tfg.analizador.modelo.Agente agente : protocolo.getAgentes()) {
             if (!listaActores.getItems().contains(agente.getNombre())) {
                 listaActores.getItems().add(agente.getNombre());
