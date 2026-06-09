@@ -97,14 +97,7 @@ public class ControladorMenu {
 
     @FXML
     void handleMostrarGuia(ActionEvent event) {
-        System.out.println("Desplegando la guía didáctica de notación...");
-        
-        GestorDialogos.mostrarConfirmacionEstandar(
-            "Ayuda", 
-            "Guía de Notación Formal", 
-            "Sintaxis aceptada por el editor:\nEmisor -> Receptor : Mensaje\n\nVariables soportadas:\n- Nonces: N_Nombre\n- Timestamps: Time, T_Nombre", 
-            "Entendido"
-        );
+        GestorVistas.mostrarGuiaUsuario();
     }
 
     @FXML

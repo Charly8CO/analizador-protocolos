@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="711.0" prefWidth="1277.0" styleClass="dashboard-container" stylesheets="@EstilosVistas.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tfg.analizador.presentacion.ControladorGuia">
+
+    <top>
+        <VBox>
+            <fx:include source="MenuSuperior.fxml" />
+            <HBox alignment="CENTER_LEFT" style="-fx-background-color: #E0E0E0; -fx-border-color: #2C3E50; -fx-border-width: 1;">
+                <padding>
+                    <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
+                </padding>
+                <Button text="&lt; Volver atrás" onAction="#handleVolver" style="-fx-background-color: transparent; -fx-text-fill: #2C3E50; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Label text="GUÍA DE NOTACIÓN Y VULNERABILIDADES" alignment="CENTER" maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <font>
+                        <Font name="System Bold" size="18.0" />
+                    </font>
+                </Label>
+                <Button text="&lt; Volver al Dashboard" visible="false" /> </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox spacing="20.0" alignment="TOP_CENTER">
+                    <padding>
+                        <Insets bottom="40.0" left="60.0" right="60.0" top="30.0" />
+                    </padding>
+                    <children>
+                        
+                        <GridPane hgap="25.0" vgap="25.0" maxWidth="1000.0">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                                <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+                            </rowConstraints>
+                            <children>
+                                <VBox spacing="10.0" styleClass="borde-oscuro-2px" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #BDC3C7;">
+                                    <children>
+                                        <Label text="📝 Sintaxis del Protocolo" style="-fx-font-weight: bold; -fx-text-fill: #2980B9;">
+                                            <font><Font size="18.0" /></font>
+                                        </Label>
+                                        <Label text="Forma básica:" style="-fx-font-weight: bold;" />
+                                        <Label text="Emisor -&gt; Receptor : Mensaje" style="-fx-font-family: 'Courier New'; -fx-background-color: #EBEDEF; -fx-padding: 5;" />
+                                        <Label text="Ejemplo:" style="-fx-font-weight: bold;" />
+                                        <Label text="Alice -&gt; Bob : {N_Alice, Alice}K_bob_kdc" wrapText="true" style="-fx-font-family: 'Courier New'; -fx-background-color: #EBEDEF; -fx-padding: 5;" />
+                                        <Label text="• Actores: Nombres simples (Alice, Bob)." wrapText="true" />
+                                        <Label text="• Nonces: Deben empezar por N_ (N_A)." wrapText="true" />
+                                        <Label text="• Claves: Deben empezar por K_ (K_ab)." wrapText="true" />
+                                    </children>
+                                </VBox>
+
+                                <VBox spacing="10.0" styleClass="borde-oscuro-2px" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #BDC3C7;" GridPane.columnIndex="1">
+                                    <children>
+                                        <Label text="⚙️ Cómo analizar" style="-fx-font-weight: bold; -fx-text-fill: #27AE60;">
+                                            <font><Font size="18.0" /></font>
+                                        </Label>
+                                        <Label text="1. Validar sintaxis:" wrapText="true" style="-fx-font-weight: bold;" />
+                                        <Label text="Comprueba si has escrito bien las flechas y las llaves { }." wrapText="true" />
+                                        <Label text="2. Analizar seguridad:" wrapText="true" style="-fx-font-weight: bold;" />
+                                        <Label text="Ejecuta el motor lógico. Asegúrate de guardar el archivo previamente." wrapText="true" />
+                                        <Label text="3. Generar Informe:" wrapText="true" style="-fx-font-weight: bold;" />
+                                        <Label text="Exporta los resultados detallados a un PDF profesional." wrapText="true" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </GridPane>
+
+                        <VBox spacing="15.0" maxWidth="1000.0" styleClass="borde-oscuro-2px" style="-fx-background-color: #FEF9E7; -fx-padding: 20; -fx-border-color: #F1C40F;">
+                            <children>
+                                <Label text="🛡️ Tipos de Vulnerabilidades" style="-fx-font-weight: bold; -fx-text-fill: #9A7D0A;">
+                                    <font><Font size="18.0" /></font>
+                                </Label>
+                                <GridPane hgap="20.0" vgap="10.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+                                        <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+                                    </rowConstraints>
+                                    <children>
+                                        <VBox spacing="5.0">
+                                            <Label text="Repetición (Replay Attack)" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />
+                                            <Label text="Distribución de claves de sesión sin marcas de tiempo (Time) ni Nonces creados por el receptor, permitiendo reinyectar sesiones caducadas." wrapText="true" />
+                                        </VBox>
+                                        <VBox spacing="5.0" GridPane.columnIndex="1">
+                                            <Label text="Suplantación (Spoofing)" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />
+                                            <Label text="Un agente envía un criptograma cerrado utilizando una clave simétrica que no posee legalmente en su repertorio de conocimiento." wrapText="true" />
+                                        </VBox>
+                                        <VBox spacing="5.0" GridPane.rowIndex="1">
+                                            <Label text="Riesgo de Reflexión (Type Flaw)" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />
+                                            <Label text="El emisor espera recibir de vuelta un criptograma matemáticamente idéntico al que él mismo originó, permitiendo que un atacante le devuelva su propio paquete como un espejo." wrapText="true" />
+                                        </VBox>
+                                        <VBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                            <Label text="Fallo de Desafío-Respuesta" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />
+                                            <Label text="Un agente envía un desafío (Nonce) para certificar la frescura, pero la respuesta nunca vuelve, o lo hace en texto plano sin protección matemática." wrapText="true" />
+                                        </VBox>
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="10.0" maxWidth="1000.0" styleClass="borde-oscuro-2px" style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #BDC3C7;">
+                            <children>
+                                <Label text="💡 Consejos de Diseño" style="-fx-font-weight: bold; -fx-text-fill: #E67E22;">
+                                    <font><Font size="18.0" /></font>
+                                </Label>
+                                <Label text="• Usa siempre el servidor de confianza 'KDC', 'S' o 'T' para la distribución inicial de claves." wrapText="true" />
+                                <Label text="• Las operaciones algorítmicas (ej: N_Bob - 1) son la mejor manera de romper los ataques de reflexión." wrapText="true" />
+                                <Label text="• Evita protocolos sin estado: asegúrate de que ambos extremos de la comunicación se envían datos con la clave de sesión final." wrapText="true" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>
