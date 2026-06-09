@@ -33,11 +33,19 @@ public class GestorDialogos {
 
         // Obtener el panel base
         DialogPane dialogPane = alerta.getDialogPane();
-        dialogPane.getStylesheets().add(GestorDialogos.class.getResource("/EstilosVistas.css").toExternalForm());
-        // Le aplicamos su css al botón de eliminar
-        javafx.scene.Node btnEliminarNode = dialogPane.lookupButton(botonEliminar);
-        if (btnEliminarNode != null) {
-            btnEliminarNode.getStyleClass().add("boton-peligro");
+        
+        // 1. Apuntamos a la ruta completa del paquete y comprobamos que no sea nulo.
+        java.net.URL cssUrl = GestorDialogos.class.getResource("/com/tfg/analizador/EstilosVistas.css");
+        if (cssUrl != null) {
+            dialogPane.getStylesheets().add(cssUrl.toExternalForm());
+        } else {
+            System.err.println("Aviso visual: No se encontró EstilosVistas.css al cargar el diálogo de advertencia.");
+        }
+
+        // Modificar el estilo del botón destructivo para que destaque en rojo
+        javafx.scene.Node botonRojo = dialogPane.lookupButton(botonEliminar);
+        if (botonRojo != null) {
+            botonRojo.setStyle("-fx-background-color: #CC0000; -fx-text-fill: white; -fx-font-weight: bold;");
         }
 
         Optional<ButtonType> resultado = alerta.showAndWait();
