@@ -89,7 +89,7 @@ public class MotorAnalisis {
                             if(!tieneFrescura) {
                                 Vulnerabilidad vuln = new Vulnerabilidad(
                                     "Falta de Frescura en Clave (Replay Attack)", m.getNumeroLinea(),
-                                    "El agente " + receptor + " recibe la clave de sesión " + k.getIdentificador() + " sin garantías de frescura en el mensaje. Un atacante podría reinyectar una sesión antigua."
+                                    "El agente " + receptor + " recibe la clave de sesión " + k.getIdentificador() + " sin garantías de frescura en el mensaje. Un atacante podría reinyectar información de una sesión antigua."
                                 );
                                 registrarVulnUnica(vulnerabilidades, p, vuln, m.getNumeroLinea());
                             }
