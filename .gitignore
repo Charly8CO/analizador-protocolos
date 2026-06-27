@@ -11,3 +11,6 @@ target/
 *.db
 *.sqlite
 MainPrueba.java
+
+# Carpetas con la memoria del TFG
+TFG_Carlos_Corbacho/
