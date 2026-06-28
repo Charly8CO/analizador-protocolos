@@ -61,6 +61,7 @@
                                         <Label text="• Actores: Nombres simples (Alice, Bob)." wrapText="true" />
                                         <Label text="• Nonces: Deben empezar por N_ (N_A)." wrapText="true" />
                                         <Label text="• Claves: Deben empezar por K_ (K_ab)." wrapText="true" />
+                                        <Label text="• Timestamps: Deben empezar por T_ o Time (T_1)." wrapText="true" />
                                     </children>
                                 </VBox>
 
@@ -93,6 +94,7 @@
                                     <rowConstraints>
                                         <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
                                         <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+                                        <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
                                     </rowConstraints>
                                     <children>
                                         <VBox spacing="5.0">
@@ -109,10 +111,24 @@
                                         </VBox>
                                         <VBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                             <Label text="Fallo de Desafío-Respuesta" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />
-                                            <Label text="Un agente envía un desafío (Nonce) para certificar la frescura, pero la respuesta nunca vuelve, o lo hace en texto plano sin protección matemática." wrapText="true" />
+                                            <Label text="Un agente envía un desafío para certificar la frescura, pero la respuesta nunca vuelve, o vuelve cifrada con una clave ajena que el retador original desconoce." wrapText="true" />
+                                        </VBox>
+                                        <VBox spacing="5.0" GridPane.rowIndex="2">
+                                            <Label text="Autenticación Unilateral" style="-fx-font-weight: bold; -fx-text-fill: #D68910;" />
+                                            <Label text="Una clave de sesión es distribuida pero solo un agente la utiliza activamente. Falla la autenticación mutua, aunque es un comportamiento normal en protocolos asíncronos." wrapText="true" />
                                         </VBox>
                                     </children>
                                 </GridPane>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="10.0" maxWidth="1000.0" styleClass="borde-oscuro-2px" style="-fx-background-color: #E8F8F5; -fx-padding: 20; -fx-border-color: #1ABC9C;">
+                            <children>
+                                <Label text="🔍 Limitación Técnica: La Trampa de Bytes" style="-fx-font-weight: bold; -fx-text-fill: #117A65;">
+                                    <font><Font size="18.0" /></font>
+                                </Label>
+                                <Label text="El motor detecta el famoso 'Type Flaw' de Otway-Rees exigiendo que el bloque reflejado tenga igual o menor longitud de variables y que el Nonce coincida en su posición exacta." wrapText="true" />
+                                <Label text="Nota: Debido a la abstracción matemática de la herramienta (Dolev-Yao), si un atacante logra un desalineamiento perfecto a nivel de bytes en memoria RAM (donde el número de variables varíe pero el tamaño total en bytes encaje), el motor no podrá detectarlo, ya que evalúa lógica estructural abstracta y no volcados de memoria." wrapText="true" />
                             </children>
                         </VBox>
 

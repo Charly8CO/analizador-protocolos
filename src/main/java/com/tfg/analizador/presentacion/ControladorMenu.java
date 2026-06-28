@@ -97,6 +97,22 @@ public class ControladorMenu {
 
     @FXML
     void handleMostrarGuia(ActionEvent event) {
+        // Comprobamos si estamos en la pestaña de análisis para lanzar la advertencia de que se perderán los datos actuales no guardados.
+        // Esto mejora la experiencia de usuario y previene frustraciones.
+        if (GestorVistas.getPantallaActual() == GestorVistas.TipoPantalla.ANALIZADOR) {
+            boolean confirmado = GestorDialogos.mostrarConfirmacionEstandar(
+                "Advertencia",
+                "Análisis en progreso",
+                "Si abres la guía ahora, perderás el análisis actual no guardado en pantalla. ¿Deseas continuar?",
+                "Continuar a la guía"
+            );
+
+            // Si el usuario cancela, detenemos la navegación
+            if (!confirmado) {
+                return; 
+            }
+        }
+        
         GestorVistas.mostrarGuiaUsuario();
     }
 

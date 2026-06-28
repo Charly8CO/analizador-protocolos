@@ -38,7 +38,9 @@ public class Protocolo {
 
     public void registrarVulnerabilidad(Vulnerabilidad v) {
         this.vulnerabilidades.add(v);
-        this.seguro = false; // Al registrar la primera vulnerabilidad, deja de ser seguro
+        if (!v.getTipoAtaque().contains("Advertencia")) {
+            this.seguro = false; // Solo las vulnerabilidades críticas invalidan la seguridad
+        }
     }
 
     // Getters

@@ -1,0 +1,10 @@
+# ─────────────────────────────────────────────────────────────────────
+# Archivo de configuración del Analizador de Protocolos
+# ─────────────────────────────────────────────────────────────────────
+# Copia este archivo como "config.properties" en la raíz del proyecto
+# y rellena los valores con tus credenciales reales.
+# IMPORTANTE: No subas "config.properties" al repositorio.
+# ─────────────────────────────────────────────────────────────────────
+
+mail.remitente=tu_correo@gmail.com
+mail.password=tu_contraseña_de_aplicacion

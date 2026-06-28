@@ -14,3 +14,6 @@ MainPrueba.java
 
 # Carpetas con la memoria del TFG
 TFG_Carlos_Corbacho/
+
+# Archivo de configuración con credenciales sensibles (SMTP)
+config.properties

@@ -175,6 +175,9 @@ public class MotorAnalisis {
         
         List<Desafio> desafiosActivos = new ArrayList<>();
         boolean usaTimestamps = false;
+        
+        // Construimos el mapa de conocimientos globales para verificar que las respuestas usan claves fiables
+        Map<String, Set<String>> conocimientosGlobales = construirMapaConocimientos(p);
 
         for (Mensaje m : p.getMensajes()) {
             String receptorActual = m.getReceptor().getNombre();
@@ -202,9 +205,20 @@ public class MotorAnalisis {
                         if (receptorActual.equals(d.emisorOriginal)) {
                             boolean estaMutado = tieneOperacion(idCompleto);
                             String claveEnvolvente = obtenerClaveEnvolvente(m.getComponentes(), baseNonce);
-                            boolean estaCifrado = !claveEnvolvente.equals("PLANO");
+                            
+                            // Validamos que el criptograma de respuesta esté envuelto con una clave segura que el retador conozca
+                            boolean esClaveConfiable = false;
+                            if (!claveEnvolvente.equals("PLANO")) {
+                                boolean retadorConoceDeBase = d.emisorOriginal.equalsIgnoreCase("KDC") || d.emisorOriginal.equalsIgnoreCase("S") || d.emisorOriginal.equalsIgnoreCase("T") ||
+                                                              claveEnvolvente.toLowerCase().contains(d.emisorOriginal.toLowerCase());
+                                
+                                Set<String> conocimientosRetador = conocimientosGlobales.getOrDefault(d.emisorOriginal, new HashSet<>());
+                                boolean retadorLaAdquirio = conocimientosRetador.contains(claveEnvolvente);
+                                
+                                esClaveConfiable = retadorConoceDeBase || retadorLaAdquirio;
+                            }
 
-                            if (estaMutado || estaCifrado) {
+                            if (estaMutado || esClaveConfiable) {
                                 d.respondido = true; 
                                 esRespuesta = true;
                             }
@@ -276,8 +290,8 @@ public class MotorAnalisis {
             if (usuariosQueCifran.size() == 1) {
                 String emisorUnico = usuariosQueCifran.iterator().next();
                 Vulnerabilidad vuln = new Vulnerabilidad(
-                    "Autenticación Unilateral (Falta de Confirmación)", p.getMensajes().size(),
-                    "La clave de sesión " + k + " fue distribuida, pero solo " + emisorUnico + " la utiliza activamente. El otro extremo nunca demuestra haberla recibido, impidiendo la autenticación mutua (Fallo crítico)."
+                    "Advertencia: Autenticación Unilateral (Falta de Confirmación)", p.getMensajes().size(),
+                    "La clave de sesión " + k + " fue distribuida, pero solo " + emisorUnico + " la utiliza activamente. Si es un protocolo interactivo, falla la Autenticación Mutua. Si es unidireccional (ej: Email/Asíncrono), es un comportamiento normal."
                 );
                 registrarVulnUnica(vulnerabilidades, p, vuln, p.getMensajes().size());
             }
@@ -386,6 +400,22 @@ public class MotorAnalisis {
         return p.isSeguro();
     }
 
+    // Extrae de forma aislada el conocimiento de claves que cada agente adquirirá a lo largo del protocolo.
+    // Muy útil para simulaciones de conocimiento previo (Dolev-Yao).
+    private Map<String, Set<String>> construirMapaConocimientos(Protocolo p) {
+        Map<String, Set<String>> conocimientosClaves = new HashMap<>();
+        for (Mensaje m : p.getMensajes()) {
+            String receptor = m.getReceptor().getNombre();
+            conocimientosClaves.putIfAbsent(receptor, new HashSet<>());
+            
+            List<Clave> clavesNuevas = new ArrayList<>();
+            for (ElementoMensaje e : m.getComponentes()) {
+                adquirirConocimientoRecursivo(e, receptor, conocimientosClaves.get(receptor), clavesNuevas);
+            }
+        }
+        return conocimientosClaves;
+    }
+
     // Explora ciega y recursivamente un elemento extrayendo todas las estructuras de cifrado anidadas.
     private void extraerCifradosRecursivo(ElementoMensaje elemento, List<Cifrado> recolector) {
         if (elemento instanceof Cifrado c) {
@@ -441,7 +471,6 @@ public class MotorAnalisis {
             existente.getLineaAfectada() == linea && existente.getTipoAtaque().equals(v.getTipoAtaque())
         );
         if(!duplicada) {
-            lista.add(v);
             p.registrarVulnerabilidad(v);
         }
     }

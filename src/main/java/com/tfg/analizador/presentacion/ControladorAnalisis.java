@@ -19,9 +19,11 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.cell.PropertyValueFactory; 
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
@@ -57,6 +59,18 @@ public class ControladorAnalisis {
     public void initialize() {
         // Establecer KDC por defecto
         listaActores.getItems().add("KDC");
+
+        // Menú contextual para poder eliminar actores
+        ContextMenu menuActores = new ContextMenu();
+        MenuItem eliminarActor = new MenuItem("Eliminar Actor");
+        eliminarActor.setOnAction(e -> {
+            String seleccionado = listaActores.getSelectionModel().getSelectedItem();
+            if (seleccionado != null) {
+                listaActores.getItems().remove(seleccionado);
+            }
+        });
+        menuActores.getItems().add(eliminarActor);
+        listaActores.setContextMenu(menuActores);
 
         // Instanciamos el editor avanzado
         editorProtocolo = new CodeArea();
@@ -310,7 +324,7 @@ public class ControladorAnalisis {
             listaActores.getItems().clear();
             listaActores.getItems().add("KDC"); 
             tablaVulnerabilidades.getItems().clear();
-            this.archivoActual = null;
+            // Eliminado this.archivoActual = null; para evitar perder el archivo al limpiar.
             this.ultimoProtocoloAnalizado = null; 
         }
     }

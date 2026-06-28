@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -48,10 +49,12 @@
                            <font><Font name="System Bold" size="14.0" /></font>
                      </Label>
                      
-                     <HBox spacing="10.0" alignment="CENTER" VBox.vgrow="ALWAYS">
-                           <PieChart fx:id="graficoSeguridad" prefHeight="250" prefWidth="250" legendVisible="false"/>
-                           <PieChart fx:id="graficoTiposVuln" prefHeight="250" prefWidth="300" legendVisible="false" />
-                     </HBox>
+                     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+                         <HBox spacing="10.0" alignment="TOP_CENTER" minHeight="500">
+                               <PieChart fx:id="graficoSeguridad" prefHeight="400" prefWidth="350" legendVisible="true" legendSide="BOTTOM" />
+                               <PieChart fx:id="graficoTiposVuln" prefHeight="400" prefWidth="500" legendVisible="true" legendSide="BOTTOM" labelsVisible="false" />
+                         </HBox>
+                     </ScrollPane>
                   </VBox>
                </VBox>
 
