@@ -1,5 +1,6 @@
 package com.tfg.analizador.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -16,16 +17,17 @@ public class GestorConfiguracion {
     private static GestorConfiguracion instancia;
     private final Properties propiedades;
 
-    /**
-     * Constructor privado. Lee el archivo de configuración externo
-     * y carga todas las propiedades en memoria.
-     *
-     * @throws IOException si el archivo {@code config.properties} no existe
-     *                     o no se puede leer.
-     */
+    // Validación de existencia del archivo de configuración.
     private GestorConfiguracion() throws IOException {
         propiedades = new Properties();
-        try (FileInputStream fis = new FileInputStream(RUTA_CONFIG)) {
+        File archivoConfig = new File(RUTA_CONFIG);
+        if (!archivoConfig.exists()) {
+            throw new IOException(
+                    "No se encontró el archivo de configuración '" + RUTA_CONFIG + "'. "
+                            + "Copie 'config.properties.example' como 'config.properties' "
+                            + "y rellene las credenciales SMTP.");
+        }
+        try (FileInputStream fis = new FileInputStream(archivoConfig)) {
             propiedades.load(fis);
         }
     }

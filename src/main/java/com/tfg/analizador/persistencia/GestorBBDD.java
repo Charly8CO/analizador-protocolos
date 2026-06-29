@@ -16,15 +16,21 @@ import com.tfg.analizador.modelo.Vulnerabilidad;
 public class GestorBBDD {
 
     private static Connection conexion = null;
-    
+
     // URL de la base de datos
     private static final String URL = "jdbc:sqlite:analisis.db?foreign_keys=on";
 
-    // Establecer conexión y devolverla para que se pueda usar
-    public static Connection getConexion() throws SQLException {
-        if (conexion == null || conexion.isClosed()) {
-            conexion = DriverManager.getConnection(URL);
-            System.out.println("Se ha establecido conexión con la base de datos");
+    // Solo los PreparedStatement y ResultSet deben cerrarse automáticamente.
+    // Se captura SQLException internamente para que los métodos llamantes no
+    // necesiten manejar la excepción fuera de sus propios try-catch.
+    public static Connection getConexion() {
+        try {
+            if (conexion == null || conexion.isClosed()) {
+                conexion = DriverManager.getConnection(URL);
+                System.out.println("Se ha establecido conexión con la base de datos");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error crítico: No se pudo conectar con la base de datos.", e);
         }
         return conexion;
     }
@@ -80,15 +86,16 @@ public class GestorBBDD {
         }
     }
 
-    public void guardarUsuario(Usuario us) throws SQLException{
-        // Los ? ? sirven para indicar que los datos necesarios para la consulta serán enviados luego
-        // Evita ataques de inyección
+    public void guardarUsuario(Usuario us) throws SQLException {
+        // Los ? ? sirven para indicar que los datos necesarios para la consulta serán
+        // enviados luego.
+        // Evita ataques de inyección.
         String sql = "INSERT INTO USUARIO (nombre_usuario, hash_contra) VALUES (?, ?)";
-        
-        // Abrimos el canal de la consulta 
-        // Al hacerlo con el try hacemos que se cierre al terminar		
+
+        // Abrimos el canal de la consulta
+        // Al hacerlo con el try hacemos que se cierre al terminar
         try (java.sql.PreparedStatement stmt = getConexion().prepareStatement(sql)) {
-            // Pasamos los datos reales en vez de las  1 = primer ? y 2 = segundo ?
+            // Pasamos los datos reales en vez de las 1 = primer ? y 2 = segundo ?
             stmt.setString(1, us.getNombreUsuario());
             stmt.setString(2, us.getHashPass());
             // actualizamos
@@ -97,11 +104,11 @@ public class GestorBBDD {
         }
     }
 
-    public Usuario obtenerUsuarioEmail(String email) throws SQLException{
+    public Usuario obtenerUsuarioEmail(String email) throws SQLException {
         String sql = "SELECT * FROM USUARIO WHERE nombre_usuario = ?";
-        try(java.sql.PreparedStatement stmt = getConexion().prepareStatement(sql)){
+        try (java.sql.PreparedStatement stmt = getConexion().prepareStatement(sql)) {
             stmt.setString(1, email);
-            try(java.sql.ResultSet rs = stmt.executeQuery()){
+            try (java.sql.ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     Usuario u = new Usuario();
                     u.setIdUsuario(rs.getInt("id_usuario"));
@@ -119,23 +126,24 @@ public class GestorBBDD {
     public static int insertarProtocolo(int idUsuario, String nombreArchivo, String rutaAbsoluta) {
         String sql = "INSERT INTO PROTOCOLO (id_usuario, nombre_protocolo, Path, fecha_analisis) VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
 
-        // Usamos Statement.RETURN_GENERATED_KEYS para poder recuperar la Primary Key
-        try (Connection conn = getConexion(); 
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
+        // Usamos Statement.RETURN_GENERATED_KEYS para poder recuperar la Primary Key.
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
             pstmt.setInt(1, idUsuario);
             pstmt.setString(2, nombreArchivo);
             pstmt.setString(3, rutaAbsoluta);
-            
+
             pstmt.executeUpdate();
-            
-            // Recuperamos el ID recién creado para poder atarle las vulnerabilidades después
+
+            // Recuperamos el ID recién creado para poder atarle las vulnerabilidades
+            // después
             try (ResultSet rs = pstmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1); 
+                    return rs.getInt(1);
                 }
             }
-            
+
         } catch (SQLException e) {
             System.err.println("Error al insertar el protocolo en SQLite: " + e.getMessage());
         }
@@ -145,7 +153,8 @@ public class GestorBBDD {
     // Busca si un protocolo con el mismo nombre ya existe para el usuario
     public static int obtenerIdProtocoloPorNombre(int idUsuario, String nombreProtocolo) {
         String sql = "SELECT id_protocolo FROM PROTOCOLO WHERE id_usuario = ? AND nombre_protocolo = ?";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idUsuario);
             pstmt.setString(2, nombreProtocolo);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -159,13 +168,15 @@ public class GestorBBDD {
         return -1;
     }
 
-    // Método específico para el botón de Guardar simple que actualiza el Path sin tocar vulnerabilidades
+    // Método específico para el botón de Guardar simple que actualiza el Path sin
+    // tocar vulnerabilidades
     public static boolean registrarGuardadoManual(int idUsuario, String nombreArchivo, String rutaAbsoluta) {
         int idExistente = obtenerIdProtocoloPorNombre(idUsuario, nombreArchivo);
-        
+
         if (idExistente != -1) {
             String sql = "UPDATE PROTOCOLO SET Path = ?, fecha_analisis = CURRENT_TIMESTAMP WHERE id_protocolo = ?";
-            try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            Connection conn = getConexion();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, rutaAbsoluta);
                 pstmt.setInt(2, idExistente);
                 pstmt.executeUpdate();
@@ -179,56 +190,101 @@ public class GestorBBDD {
         }
     }
 
-    // Guarda el análisis completo: actualiza el protocolo (incluyendo su Path) si ya existe o crea uno nuevo si no.
+    // Guarda el análisis completo: actualiza el protocolo (incluyendo su Path) si
+    // ya existe o crea uno nuevo si no.
+    // Se hace una transacción atómica para evitar pérdida de datos si falla el
+    // INSERT tras el DELETE.
     public boolean guardarHistorial(Usuario u, Protocolo p, String rutaAbsoluta) {
         // Comprobamos si el protocolo con ese mismo nombre ya está en la base de datos
         int idExistente = obtenerIdProtocoloPorNombre(u.getIdUsuario(), p.getNombreProtocolo());
-        
+
         if (idExistente != -1) {
             // Si ya existe actualizamos
-            p.setIdProtocolo(idExistente); 
-            
-            // Actualizamos también el Path por si el archivo ha sido importado desde otra ubicación
-            String sqlUpdate = "UPDATE PROTOCOLO SET es_seguro = ?, fecha_analisis = CURRENT_TIMESTAMP, Path = ? WHERE id_protocolo = ?";
-            try (Connection conn = getConexion(); PreparedStatement pstmtUpdate = conn.prepareStatement(sqlUpdate)) {
-                pstmtUpdate.setInt(1, p.isSeguro() ? 1 : 0);
-                pstmtUpdate.setString(2, rutaAbsoluta);
-                pstmtUpdate.setInt(3, idExistente);
-                pstmtUpdate.executeUpdate();
+            p.setIdProtocolo(idExistente);
+
+            Connection conn = null;
+            try {
+                conn = getConexion();
+                // Inicio de transacción atómica
+                conn.setAutoCommit(false);
+
+                // Actualizamos también el Path por si el archivo ha sido importado desde otra
+                // ubicación
+                String sqlUpdate = "UPDATE PROTOCOLO SET es_seguro = ?, fecha_analisis = CURRENT_TIMESTAMP, Path = ? WHERE id_protocolo = ?";
+                try (PreparedStatement pstmtUpdate = conn.prepareStatement(sqlUpdate)) {
+                    pstmtUpdate.setInt(1, p.isSeguro() ? 1 : 0);
+                    pstmtUpdate.setString(2, rutaAbsoluta);
+                    pstmtUpdate.setInt(3, idExistente);
+                    pstmtUpdate.executeUpdate();
+                }
+
+                // Eliminamos las vulnerabilidades del análisis anterior para limpiar el
+                // historial de este archivo
+                String sqlDeleteVulns = "DELETE FROM VULNERABILIDAD WHERE id_protocolo = ?";
+                try (PreparedStatement pstmtDelete = conn.prepareStatement(sqlDeleteVulns)) {
+                    pstmtDelete.setInt(1, idExistente);
+                    pstmtDelete.executeUpdate();
+                }
+
+                // Insertamos el nuevo set de fallos lógicos detectados en lote
+                if (p.getVulnerabilidades() != null && !p.getVulnerabilidades().isEmpty()) {
+                    String sqlVuln = "INSERT INTO VULNERABILIDAD (id_protocolo, nombre_vulnerabilidad, tipo_vulnerabilidad, linea, descripcion) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement pstmtVuln = conn.prepareStatement(sqlVuln)) {
+                        for (Vulnerabilidad v : p.getVulnerabilidades()) {
+                            pstmtVuln.setInt(1, idExistente);
+                            pstmtVuln.setString(2, v.getTipoAtaque());
+                            pstmtVuln.setString(3, "Lógica");
+                            pstmtVuln.setInt(4, v.getLineaAfectada());
+                            pstmtVuln.setString(5, v.getDescripcion());
+                            pstmtVuln.addBatch();
+                        }
+                        pstmtVuln.executeBatch();
+                    }
+                }
+
+                // Confirmar transacción si todo fue bien
+                conn.commit();
+                return true;
+
             } catch (SQLException e) {
                 System.err.println("Error al actualizar el protocolo existente: " + e.getMessage());
+                // Rollback si algo falla para mantener la integridad de los datos
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException ex) {
+                        System.err.println("Error en rollback: " + ex.getMessage());
+                    }
+                }
                 return false;
+            } finally {
+                // Restaurar autocommit al estado por defecto
+                if (conn != null) {
+                    try {
+                        conn.setAutoCommit(true);
+                    } catch (SQLException ex) {
+                        System.err.println("Error al restaurar autocommit: " + ex.getMessage());
+                    }
+                }
             }
-            
-            // Eliminamos las vulnerabilidades del análisis anterior para limpiar el historial de este archivo
-            String sqlDeleteVulns = "DELETE FROM VULNERABILIDAD WHERE id_protocolo = ?";
-            try (Connection conn = getConexion(); PreparedStatement pstmtDelete = conn.prepareStatement(sqlDeleteVulns)) {
-                pstmtDelete.setInt(1, idExistente);
-                pstmtDelete.executeUpdate();
-            } catch (SQLException e) {
-                System.err.println("Error al limpiar las vulnerabilidades obsoletas: " + e.getMessage());
-            }
-            
-            // Insertamos el nuevo set de fallos lógicos detectados en lote
-            insertarVulnerabilidadesLote(idExistente, p.getVulnerabilidades());
-            return true;
-            
+
         } else {
-            // Si es l aprimera vez insertamos normalmente
+            // Si es la primera vez insertamos normalmente
             int idGenerado = insertarProtocolo(u.getIdUsuario(), p.getNombreProtocolo(), rutaAbsoluta);
-            
+
             if (idGenerado != -1) {
-                p.setIdProtocolo(idGenerado); 
-                
+                p.setIdProtocolo(idGenerado);
+
                 String sqlUpdate = "UPDATE PROTOCOLO SET es_seguro = ? WHERE id_protocolo = ?";
-                try (Connection conn = getConexion(); PreparedStatement pstmtUpdate = conn.prepareStatement(sqlUpdate)) {
+                Connection connElse = getConexion();
+                try (PreparedStatement pstmtUpdate = connElse.prepareStatement(sqlUpdate)) {
                     pstmtUpdate.setInt(1, p.isSeguro() ? 1 : 0);
                     pstmtUpdate.setInt(2, idGenerado);
                     pstmtUpdate.executeUpdate();
                 } catch (SQLException e) {
                     System.err.println("Error al actualizar seguridad: " + e.getMessage());
                 }
-                
+
                 // Insertar todas las vulnerabilidades vinculadas a ese protocolo
                 insertarVulnerabilidadesLote(idGenerado, p.getVulnerabilidades());
                 return true;
@@ -241,8 +297,9 @@ public class GestorBBDD {
     private void insertarVulnerabilidadesLote(int idProtocolo, List<Vulnerabilidad> vulnerabilidades) {
         if (vulnerabilidades != null && !vulnerabilidades.isEmpty()) {
             String sqlVuln = "INSERT INTO VULNERABILIDAD (id_protocolo, nombre_vulnerabilidad, tipo_vulnerabilidad, linea, descripcion) VALUES (?, ?, ?, ?, ?)";
-            try (Connection conn = getConexion(); PreparedStatement pstmtVuln = conn.prepareStatement(sqlVuln)) {
-                
+            Connection conn = getConexion();
+            try (PreparedStatement pstmtVuln = conn.prepareStatement(sqlVuln)) {
+
                 for (Vulnerabilidad v : vulnerabilidades) {
                     pstmtVuln.setInt(1, idProtocolo);
                     pstmtVuln.setString(2, v.getTipoAtaque());
@@ -251,26 +308,27 @@ public class GestorBBDD {
                     pstmtVuln.setString(5, v.getDescripcion());
                     pstmtVuln.addBatch();
                 }
-                pstmtVuln.executeBatch(); 
+                pstmtVuln.executeBatch();
             } catch (SQLException e) {
                 System.err.println("Error al insertar las vulnerabilidades en lote: " + e.getMessage());
             }
         }
     }
 
-    // Carga todos los metadatos de los protocolos de un usuario para rellenar el Dashboard.
+    // Carga todos los metadatos de los protocolos de un usuario para rellenar el
+    // Dashboard.
     public List<Protocolo> cargarProtocolos(int idusuario) {
         List<Protocolo> lista = new ArrayList<>();
         String sql = "SELECT * FROM PROTOCOLO WHERE id_usuario = ? ORDER BY fecha_analisis DESC";
-        
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idusuario);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     Protocolo p = new Protocolo(rs.getString("nombre_protocolo"));
                     p.setIdProtocolo(rs.getInt("id_protocolo"));
-                    p.setRutaArchivo(rs.getString("Path")); // GUARDAMOS LA RUTA
-                    
+                    p.setRutaArchivo(rs.getString("Path"));
+
                     int seguroNum = rs.getInt("es_seguro");
                     if (!rs.wasNull()) {
                         p.setSeguro(seguroNum == 1);
@@ -286,7 +344,8 @@ public class GestorBBDD {
 
     public boolean renombrarProtocolo(int idProtocolo, String nuevoNombre, String nuevaRuta) {
         String sql = "UPDATE PROTOCOLO SET nombre_protocolo = ?, Path = ? WHERE id_protocolo = ?";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, nuevoNombre);
             pstmt.setString(2, nuevaRuta);
             pstmt.setInt(3, idProtocolo);
@@ -299,7 +358,8 @@ public class GestorBBDD {
 
     public boolean actualizarPassword(int idUsuario, String nuevoHash) {
         String sql = "UPDATE USUARIO SET hash_contra = ? WHERE id_usuario = ?";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, nuevoHash);
             pstmt.setInt(2, idUsuario);
             return pstmt.executeUpdate() > 0;
@@ -311,7 +371,8 @@ public class GestorBBDD {
 
     public boolean eliminarUsuario(int idUsuario) {
         String sql = "DELETE FROM USUARIO WHERE id_usuario = ?";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idUsuario);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -322,10 +383,12 @@ public class GestorBBDD {
 
     public int obtenerTotalProtocolosSeguros(int idUsuario) {
         String sql = "SELECT COUNT(*) FROM PROTOCOLO WHERE id_usuario = ? AND es_seguro = 1";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idUsuario);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                if (rs.next())
+                    return rs.getInt(1);
             }
         } catch (SQLException e) {
             System.err.println("Error al contar protocolos seguros: " + e.getMessage());
@@ -335,11 +398,13 @@ public class GestorBBDD {
 
     public int obtenerTotalVulnerabilidades(int idUsuario) {
         String sql = "SELECT COUNT(v.id_vulnerabilidad) FROM VULNERABILIDAD v " +
-                     "INNER JOIN PROTOCOLO p ON v.id_protocolo = p.id_protocolo WHERE p.id_usuario = ?";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                "INNER JOIN PROTOCOLO p ON v.id_protocolo = p.id_protocolo WHERE p.id_usuario = ?";
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idUsuario);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                if (rs.next())
+                    return rs.getInt(1);
             }
         } catch (SQLException e) {
             System.err.println("Error al contar vulnerabilidades: " + e.getMessage());
@@ -347,13 +412,15 @@ public class GestorBBDD {
         return 0;
     }
 
-    // Devuelve un mapa con el conteo de vulnerabilidades agrupadas por su nombre/tipo
+    // Devuelve un mapa con el conteo de vulnerabilidades agrupadas por su
+    // nombre/tipo
     public java.util.Map<String, Integer> obtenerDistribucionVulnerabilidades(int idUsuario) {
         java.util.Map<String, Integer> distribucion = new java.util.HashMap<>();
         String sql = "SELECT v.nombre_vulnerabilidad, COUNT(*) as cantidad FROM VULNERABILIDAD v " +
-                     "INNER JOIN PROTOCOLO p ON v.id_protocolo = p.id_protocolo " +
-                     "WHERE p.id_usuario = ? GROUP BY v.nombre_vulnerabilidad";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                "INNER JOIN PROTOCOLO p ON v.id_protocolo = p.id_protocolo " +
+                "WHERE p.id_usuario = ? GROUP BY v.nombre_vulnerabilidad";
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idUsuario);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -366,10 +433,11 @@ public class GestorBBDD {
         return distribucion;
     }
 
-    // Borra un protocolo del historial. 
+    // Borra un protocolo del historial.
     public boolean eliminarProtocolo(int idprotocolo) {
         String sql = "DELETE FROM PROTOCOLO WHERE id_protocolo = ?";
-        try (Connection conn = getConexion(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = getConexion();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idprotocolo);
             int filasModificadas = pstmt.executeUpdate();
             return filasModificadas > 0;
@@ -377,11 +445,5 @@ public class GestorBBDD {
             System.err.println("Error al borrar protocolo: " + e.getMessage());
             return false;
         }
-    }
-
-    public Usuario verificarCredenciales(String nombre, String hashPass) {
-        // La validación de credenciales (BCrypt) ya se hace de manera superior y más segura
-        // en GestorUsuarios.autenticarUsuario(). Dejo esto comentado para no causar duplicidad.
-        throw new UnsupportedOperationException("Operación delegada a GestorUsuarios.autenticarUsuario()");
     }
 }
