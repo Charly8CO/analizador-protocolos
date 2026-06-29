@@ -6,7 +6,8 @@ public class Usuario {
     private String nombreUsuario;
     private String hashPass;
 
-    public Usuario() {}
+    public Usuario() {
+    }
 
     // Creamos los usuarios nuevos desde la interfaz y el id lo crea el sqlite
     public Usuario(String nombre_usuario, String hash_pass) {
@@ -14,16 +15,27 @@ public class Usuario {
         this.hashPass = hash_pass;
     }
 
-    public int getIdUsuario() { return idUsuario; }
-    public String getNombreUsuario() { return nombreUsuario; }
-    public String getHashPass() { return hashPass; }
+    public int getIdUsuario() {
+        return idUsuario;
+    }
 
-    public void setIdUsuario(int id_usuario) { this.idUsuario = id_usuario; }
-    public void setNombreUsuario(String nombre_usuario) { this.nombreUsuario = nombre_usuario; }
-    public void setHashPass(String hash_pass) { this.hashPass = hash_pass; }
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
 
-    public boolean actualizarContrase(String nuevohash) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public String getHashPass() {
+        return hashPass;
+    }
+
+    public void setIdUsuario(int id_usuario) {
+        this.idUsuario = id_usuario;
+    }
+
+    public void setNombreUsuario(String nombre_usuario) {
+        this.nombreUsuario = nombre_usuario;
+    }
+
+    public void setHashPass(String hash_pass) {
+        this.hashPass = hash_pass;
     }
 }

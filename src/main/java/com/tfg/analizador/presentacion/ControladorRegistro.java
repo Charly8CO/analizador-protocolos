@@ -19,28 +19,36 @@ import javafx.scene.layout.VBox;
  */
 public class ControladorRegistro {
 
-    // --- Elementos de la Fase 1 (Formulario) ---
-    @FXML private VBox cajaFormulario;
-    @FXML private TextField txtEmail;
-    @FXML private PasswordField txtPass;
-    @FXML private PasswordField txtConfirmarPass;
-    @FXML private Button btnRegistrar;
+    @FXML
+    private VBox cajaFormulario;
+    @FXML
+    private TextField txtEmail;
+    @FXML
+    private PasswordField txtPass;
+    @FXML
+    private PasswordField txtConfirmarPass;
+    @FXML
+    private Button btnRegistrar;
 
-    // --- Elementos de la Fase 2 (Verificación) ---
-    @FXML private VBox cajaVerificacion;
-    @FXML private TextField txtCodigo;
-    @FXML private Button btnVerificar;
+    @FXML
+    private VBox cajaVerificacion;
+    @FXML
+    private TextField txtCodigo;
+    @FXML
+    private Button btnVerificar;
 
-    @FXML private Label lblError;
+    @FXML
+    private Label lblError;
 
-    // Variables temporales para mantener el estado del usuario en proceso de registro
+    // Variables temporales para mantener el estado del usuario en proceso de
+    // registro
     private String codigoGeneradoTemp;
     private String emailPendienteTemp;
     private String passPendienteTemp;
 
     /**
-     * Valida el formulario de registro y dispara el envío del código de verificación (RF1.1).
-     * AÑADIDO: 'public' para evitar bloqueos de JavaFX Reflection.
+     * Valida el formulario de registro y dispara el envío del código de
+     * verificación.
      */
     @FXML
     public void handleRegistrarAction(ActionEvent event) {
@@ -66,7 +74,8 @@ public class ControladorRegistro {
             return;
         }
 
-        // Bloqueamos la interfaz para evitar interacciones concurrentes durante la espera del servidor SMTP
+        // Bloqueamos la interfaz para evitar interacciones concurrentes durante la
+        // espera del servidor SMTP
         btnRegistrar.setDisable(true);
         btnRegistrar.setText("Enviando correo, espera...");
         txtEmail.setDisable(true);
@@ -109,8 +118,8 @@ public class ControladorRegistro {
     }
 
     /**
-     * Valida el código introducido y, de ser correcto, registra al usuario en la base de datos.
-     * AÑADIDO: 'public'.
+     * Valida el código introducido y, de ser correcto, registra al usuario en la
+     * base de datos.
      */
     @FXML
     public void handleVerificarAction(ActionEvent event) {
@@ -124,18 +133,18 @@ public class ControladorRegistro {
 
                 // Visualización de éxito
                 mostrarExito("¡Verificación completada! Cuenta creada con éxito.");
-                
+
                 // Ocultamos la caja de texto donde se escribió el código
                 txtCodigo.setVisible(false);
                 txtCodigo.setManaged(false);
-                
+
                 // Transformamos el botón existente en una pasarela al Login
                 btnVerificar.setText("Ir a Iniciar Sesión");
                 btnVerificar.setStyle("-fx-background-color: #2980B9; -fx-text-fill: white; -fx-font-weight: bold;");
-                
+
                 // Sobrescribimos su acción para que al pulsarlo te lleve al Login
                 btnVerificar.setOnAction(e -> GestorVistas.irALogin());
-                
+
                 // Ocultamos el último elemento del VBox (el enlace de "Cancelar")
                 int ultimoIndice = cajaVerificacion.getChildren().size() - 1;
                 if (ultimoIndice >= 0) {
@@ -144,7 +153,7 @@ public class ControladorRegistro {
                 }
 
             } catch (Exception e) {
-                mostrarError(e.getMessage()); 
+                mostrarError(e.getMessage());
             }
         } else {
             mostrarError("El código es incorrecto.");
@@ -168,13 +177,15 @@ public class ControladorRegistro {
 
     private void mostrarError(String mensaje) {
         lblError.getStyleClass().remove("mensaje-exito");
-        if (!lblError.getStyleClass().contains("mensaje-error")) lblError.getStyleClass().add("mensaje-error");
+        if (!lblError.getStyleClass().contains("mensaje-error"))
+            lblError.getStyleClass().add("mensaje-error");
         lblError.setText(mensaje);
     }
 
     private void mostrarExito(String mensaje) {
         lblError.getStyleClass().remove("mensaje-error");
-        if (!lblError.getStyleClass().contains("mensaje-exito")) lblError.getStyleClass().add("mensaje-exito");
+        if (!lblError.getStyleClass().contains("mensaje-exito"))
+            lblError.getStyleClass().add("mensaje-exito");
         lblError.setText(mensaje);
     }
 

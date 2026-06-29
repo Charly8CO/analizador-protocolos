@@ -14,18 +14,18 @@ import javafx.scene.layout.VBox;
 public class GestorDialogos {
 
     /**
-     * @param mensaje 
-     * @param textoBotonRojo 
-     * @return 
+     * @param mensaje
+     * @param textoBotonRojo
+     * @return
      */
     public static boolean mostrarAdvertenciaDestructiva(String mensaje, String textoBotonRojo) {
-        
+
         Alert alerta = new Alert(Alert.AlertType.WARNING);
         alerta.setTitle("Advertencia");
-        alerta.setHeaderText(null); 
+        alerta.setHeaderText(null);
         alerta.setContentText(mensaje);
 
-        // Se crean los botones 
+        // Se crean los botones
         ButtonType botonCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType botonEliminar = new ButtonType(textoBotonRojo, ButtonBar.ButtonData.OK_DONE);
 
@@ -33,8 +33,8 @@ public class GestorDialogos {
 
         // Obtener el panel base
         DialogPane dialogPane = alerta.getDialogPane();
-        
-        // 1. Apuntamos a la ruta completa del paquete y comprobamos que no sea nulo.
+
+        // Apuntamos a la ruta completa del paquete y comprobamos que no sea nulo.
         java.net.URL cssUrl = GestorDialogos.class.getResource("/com/tfg/analizador/EstilosVistas.css");
         if (cssUrl != null) {
             dialogPane.getStylesheets().add(cssUrl.toExternalForm());
@@ -52,17 +52,18 @@ public class GestorDialogos {
         return resultado.isPresent() && resultado.get() == botonEliminar;
     }
 
-
     /**
      * Genera una ventana de confirmación estándar para acciones no destructivas.
-     * @param titulo El título de la ventana.
-     * @param cabecera El texto principal destacado.
-     * @param mensaje El texto secundario explicativo.
+     * 
+     * @param titulo              El título de la ventana.
+     * @param cabecera            El texto principal destacado.
+     * @param mensaje             El texto secundario explicativo.
      * @param textoBotonConfirmar El texto del botón de acción principal.
      * @return true si el usuario acepta, false si cancela.
      */
-    public static boolean mostrarConfirmacionEstandar(String titulo, String cabecera, String mensaje, String textoBotonConfirmar) {
-        
+    public static boolean mostrarConfirmacionEstandar(String titulo, String cabecera, String mensaje,
+            String textoBotonConfirmar) {
+
         Alert alerta = new Alert(Alert.AlertType.CONFIRMATION);
         alerta.setTitle(titulo);
         alerta.setHeaderText(cabecera);
@@ -79,6 +80,7 @@ public class GestorDialogos {
 
     /**
      * Ventana para introducir el nombre del autor
+     * 
      * @return contiene el texto introducido si se pulsa añadir
      */
     public static Optional<String> solicitarNombreActor() {
@@ -86,10 +88,11 @@ public class GestorDialogos {
         dialogo.setTitle("Nuevo Actor");
 
         DialogPane dialogPane = dialogo.getDialogPane();
-        dialogPane.setStyle("-fx-background-color: #F0F0F0;"); 
+        dialogPane.setStyle("-fx-background-color: #F0F0F0;");
 
         Label cabecera = new Label("Añade un nuevo actor");
-        cabecera.setStyle("-fx-background-color: #009900; -fx-text-fill: white; -fx-padding: 15px; -fx-font-weight: bold; -fx-font-size: 14px;");
+        cabecera.setStyle(
+                "-fx-background-color: #009900; -fx-text-fill: white; -fx-padding: 15px; -fx-font-weight: bold; -fx-font-size: 14px;");
         cabecera.setMaxWidth(Double.MAX_VALUE);
         dialogPane.setHeader(cabecera);
 

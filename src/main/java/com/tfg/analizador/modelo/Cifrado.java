@@ -1,6 +1,7 @@
 package com.tfg.analizador.modelo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Cifrado implements ElementoMensaje {
@@ -17,18 +18,19 @@ public class Cifrado implements ElementoMensaje {
         return "Cifrado_con_" + claveSello.getIdentificador();
     }
 
-    public Clave getClaveSello() { 
-        return claveSello; 
-    }
-    
-    public void setClaveSello(Clave claveSello) { 
-        this.claveSello = claveSello; 
+    public Clave getClaveSello() {
+        return claveSello;
     }
 
-    public List<ElementoMensaje> getContenido() { 
-        return contenido; 
+    public void setClaveSello(Clave claveSello) {
+        this.claveSello = claveSello;
     }
-    
+
+    // Lista inmutable para proteger el encapsulamiento.
+    public List<ElementoMensaje> getContenido() {
+        return Collections.unmodifiableList(contenido);
+    }
+
     public void anadirElemento(ElementoMensaje elemento) {
         this.contenido.add(elemento);
     }

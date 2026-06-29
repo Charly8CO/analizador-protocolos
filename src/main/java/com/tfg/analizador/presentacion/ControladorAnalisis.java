@@ -24,7 +24,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.cell.PropertyValueFactory; 
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -52,7 +52,7 @@ public class ControladorAnalisis {
     private CodeArea editorProtocolo;
 
     private File archivoActual = null;
-    
+
     private Protocolo ultimoProtocoloAnalizado = null;
 
     @FXML
@@ -75,10 +75,10 @@ public class ControladorAnalisis {
         // Instanciamos el editor avanzado
         editorProtocolo = new CodeArea();
         editorProtocolo.setParagraphGraphicFactory(LineNumberFactory.get(editorProtocolo));
-        
+
         // Esto sirve para evitar apelotonamientos
         VirtualizedScrollPane<CodeArea> scrollEditor = new VirtualizedScrollPane<>(editorProtocolo);
-        
+
         // Inyectamos el panel de scroll
         contenedorEditor.getChildren().add(scrollEditor);
 
@@ -90,6 +90,7 @@ public class ControladorAnalisis {
         colVulnDesc.setCellFactory(tc -> {
             TableCell<Vulnerabilidad, String> cell = new TableCell<>() {
                 private Text text = new Text();
+
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
@@ -109,6 +110,7 @@ public class ControladorAnalisis {
         colVulnNombre.setCellFactory(tc -> {
             TableCell<Vulnerabilidad, String> cell = new TableCell<>() {
                 private Text text = new Text();
+
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
@@ -137,13 +139,15 @@ public class ControladorAnalisis {
     void handleNuevoActor(ActionEvent event) {
         // Abre la ventana de crear nuevo actor
         Optional<String> resultado = GestorDialogos.solicitarNombreActor();
-        
+
         // Si se pulsa añadir tras escribir un nuevo actor
         resultado.ifPresent(nombre -> {
             if (nombre.isEmpty()) {
-                GestorDialogos.mostrarConfirmacionEstandar("Advertencia", "Campo vacío", "El nombre del actor no puede estar en blanco.", "Aceptar");
+                GestorDialogos.mostrarConfirmacionEstandar("Advertencia", "Campo vacío",
+                        "El nombre del actor no puede estar en blanco.", "Aceptar");
             } else if (listaActores.getItems().contains(nombre)) {
-                GestorDialogos.mostrarConfirmacionEstandar("Advertencia", "Actor duplicado", "El actor '" + nombre + "' ya existe en la lista.", "Aceptar");
+                GestorDialogos.mostrarConfirmacionEstandar("Advertencia", "Actor duplicado",
+                        "El actor '" + nombre + "' ya existe en la lista.", "Aceptar");
             } else {
                 listaActores.getItems().add(nombre);
             }
@@ -155,7 +159,8 @@ public class ControladorAnalisis {
         String textoUsuario = editorProtocolo.getText();
 
         if (textoUsuario.trim().isEmpty()) {
-            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "Escribe un protocolo antes de validar.", "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío",
+                    "Escribe un protocolo antes de validar.", "Aceptar");
             return;
         }
 
@@ -163,9 +168,11 @@ public class ControladorAnalisis {
             ServicioAnalisis servicio = new ServicioAnalisis();
             servicio.validarSintaxisSolo(textoUsuario); // Lanza excepción si la estructura falla
 
-            GestorDialogos.mostrarConfirmacionEstandar("Validación", "Sintaxis Correcta", "La estructura del protocolo es válida. Puedes proceder a analizarlo.", "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Validación", "Sintaxis Correcta",
+                    "La estructura del protocolo es válida. Puedes proceder a analizarlo.", "Aceptar");
         } catch (Exception e) {
-            GestorDialogos.mostrarConfirmacionEstandar("Error de Sintaxis", "Estructura incorrecta", e.getMessage(), "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Error de Sintaxis", "Estructura incorrecta", e.getMessage(),
+                    "Aceptar");
         }
     }
 
@@ -174,33 +181,37 @@ public class ControladorAnalisis {
         String textoUsuario = editorProtocolo.getText();
 
         if (textoUsuario.trim().isEmpty()) {
-            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "Escribe un protocolo antes de analizar.", "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío",
+                    "Escribe un protocolo antes de analizar.", "Aceptar");
             return;
         }
 
         File archivo = this.archivoActual;
 
-        // Comprobación de integridad del archivo para evitar pérdida de trabajo en memoria
+        // Comprobación de integridad del archivo para evitar pérdida de trabajo en
+        // memoria
         if (archivo != null && !archivo.exists()) {
-            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado", "El archivo de este análisis ha sido borrado o movido de su ubicación original. Para no perder tu progreso, deberás guardarlo en una nueva ruta.", "Entendido");
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado",
+                    "El archivo de este análisis ha sido borrado o movido de su ubicación original. Para no perder tu progreso, deberás guardarlo en una nueva ruta.",
+                    "Entendido");
             archivo = null; // Esto fuerza la apertura del FileChooser
         }
 
         if (archivo == null) {
             FileChooser selector = new FileChooser();
             selector.setTitle("Guardar Protocolo para Analizar");
-            selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
-            
+            selector.getExtensionFilters()
+                    .add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
+
             archivo = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
 
             if (archivo == null) {
                 GestorDialogos.mostrarConfirmacionEstandar(
-                    "Análisis Cancelado", 
-                    "Guardado Obligatorio", 
-                    "Debes guardar el archivo en tu equipo para poder realizar el análisis y registrar los fallos en el historial.", 
-                    "Aceptar"
-                );
-                return; 
+                        "Análisis Cancelado",
+                        "Guardado Obligatorio",
+                        "Debes guardar el archivo en tu equipo para poder realizar el análisis y registrar los fallos en el historial.",
+                        "Aceptar");
+                return;
             }
             this.archivoActual = archivo;
         }
@@ -208,9 +219,9 @@ public class ControladorAnalisis {
         try {
             ServicioAnalisis servicio = new ServicioAnalisis();
 
-            // Antes de procesar el protocolo, forzamos la sobreescritura física 
+            // Antes de procesar el protocolo, forzamos la sobreescritura física
             // del archivo para así guardar lo actualizado.
-            servicio.guardarProtocolo(archivo, textoUsuario); 
+            servicio.guardarProtocolo(archivo, textoUsuario);
 
             // Delegamos la validación, compilación, análisis y registro BBDD condicional
             Protocolo protocoloProcesado = servicio.procesarYGuardarProtocolo(textoUsuario, archivo);
@@ -219,20 +230,26 @@ public class ControladorAnalisis {
             this.ultimoProtocoloAnalizado = protocoloProcesado;
 
             actualizarListaActores(protocoloProcesado);
-            ObservableList<Vulnerabilidad> data = FXCollections.observableArrayList(protocoloProcesado.getVulnerabilidades());
+            ObservableList<Vulnerabilidad> data = FXCollections
+                    .observableArrayList(protocoloProcesado.getVulnerabilidades());
             tablaVulnerabilidades.setItems(data);
 
             if (protocoloProcesado.isSeguro()) {
-                GestorDialogos.mostrarConfirmacionEstandar("Análisis Finalizado", "Protocolo Seguro", "El documento se ha procesado. No se han detectado fallos lógicos. El diseño es robusto.", "Aceptar");
+                GestorDialogos.mostrarConfirmacionEstandar("Análisis Finalizado", "Protocolo Seguro",
+                        "El documento se ha procesado. No se han detectado fallos lógicos. El diseño es robusto.",
+                        "Aceptar");
             } else {
                 GestorDialogos.mostrarConfirmacionEstandar(
-                    "Análisis Finalizado", 
-                    "Vulnerabilidades Detectadas", 
-                    "El documento se ha procesado.\n\nEl motor ha encontrado " + protocoloProcesado.getVulnerabilidades().size() + " brechas de seguridad. Revisa la tabla lateral para más detalles.", 
-                    "Aceptar");
+                        "Análisis Finalizado",
+                        "Vulnerabilidades Detectadas",
+                        "El documento se ha procesado.\n\nEl motor ha encontrado "
+                                + protocoloProcesado.getVulnerabilidades().size()
+                                + " brechas de seguridad. Revisa la tabla lateral para más detalles.",
+                        "Aceptar");
             }
         } catch (Exception e) {
-            GestorDialogos.mostrarConfirmacionEstandar("Error en el Proceso", "No se puede completar", e.getMessage(), "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Error en el Proceso", "No se puede completar", e.getMessage(),
+                    "Aceptar");
         }
     }
 
@@ -240,7 +257,8 @@ public class ControladorAnalisis {
     @FXML
     void handleGenerarInforme(ActionEvent event) {
         if (ultimoProtocoloAnalizado == null) {
-            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Sin Análisis", "Debes analizar el protocolo antes de poder generar un informe PDF.", "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Sin Análisis",
+                    "Debes analizar el protocolo antes de poder generar un informe PDF.", "Aceptar");
             return;
         }
 
@@ -248,7 +266,7 @@ public class ControladorAnalisis {
         selector.setTitle("Guardar Informe PDF");
         selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf"));
         selector.setInitialFileName(ultimoProtocoloAnalizado.getNombreProtocolo() + "_Informe.pdf");
-        
+
         File archivoPdf = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
 
         if (archivoPdf != null) {
@@ -258,9 +276,11 @@ public class ControladorAnalisis {
                 String textoActual = editorProtocolo.getText();
 
                 // Delegamos la creación del PDF a nuestro gestor
-                gestor.generarInformePDF(ultimoProtocoloAnalizado, archivoPdf.getAbsolutePath(), textoActual, usuarioActivo);
-                
-                GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Informe Generado", "El informe PDF se ha exportado correctamente.", "Aceptar");
+                gestor.generarInformePDF(ultimoProtocoloAnalizado, archivoPdf.getAbsolutePath(), textoActual,
+                        usuarioActivo);
+
+                GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Informe Generado",
+                        "El informe PDF se ha exportado correctamente.", "Aceptar");
             } catch (Exception e) {
                 GestorDialogos.mostrarConfirmacionEstandar("Error", "Error al generar PDF", e.getMessage(), "Aceptar");
             }
@@ -272,7 +292,8 @@ public class ControladorAnalisis {
         String texto = editorProtocolo.getText();
 
         if (texto.trim().isEmpty()) {
-            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "No hay contenido para guardar.", "Aceptar");
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Editor vacío", "No hay contenido para guardar.",
+                    "Aceptar");
             return;
         }
 
@@ -280,7 +301,9 @@ public class ControladorAnalisis {
 
         // Si el archivo se ha borrado en local, forzamos un Guardar Como
         if (archivoDestino != null && !archivoDestino.exists()) {
-            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado", "El archivo físico ya no se encuentra en su ruta original. Por seguridad, selecciona una nueva ubicación para guardar los cambios.", "Entendido");
+            GestorDialogos.mostrarConfirmacionEstandar("Aviso", "Archivo original no encontrado",
+                    "El archivo físico ya no se encuentra en su ruta original. Por seguridad, selecciona una nueva ubicación para guardar los cambios.",
+                    "Entendido");
             archivoDestino = null;
         }
 
@@ -288,23 +311,26 @@ public class ControladorAnalisis {
         if (archivoDestino == null) {
             FileChooser selector = new FileChooser();
             selector.setTitle("Guardar Protocolo");
-            selector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
-            
+            selector.getExtensionFilters()
+                    .add(new FileChooser.ExtensionFilter("Archivos de Protocolo (*.prot)", "*.prot"));
+
             archivoDestino = selector.showSaveDialog(contenedorEditor.getScene().getWindow());
-            
+
+            // Guardado cancelado por el usuario
             if (archivoDestino == null) {
-                return; // Guardado cancelado por el usuario
+                return;
             }
         }
 
         try {
             ServicioAnalisis servicio = new ServicioAnalisis();
             servicio.guardarProtocolo(archivoDestino, texto);
-            
+
             // Actualizamos la sesión en memoria
             this.archivoActual = archivoDestino;
-            
-            GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Protocolo Guardado", "El archivo se ha guardado y actualizado en la base de datos de manera correcta.", "Aceptar");
+
+            GestorDialogos.mostrarConfirmacionEstandar("Éxito", "Protocolo Guardado",
+                    "El archivo se ha guardado y actualizado en la base de datos de manera correcta.", "Aceptar");
         } catch (Exception e) {
             GestorDialogos.mostrarConfirmacionEstandar("Error", "Error al guardar", e.getMessage(), "Aceptar");
         }
@@ -313,25 +339,25 @@ public class ControladorAnalisis {
     @FXML
     void handleLimpiarProtocolo(ActionEvent event) {
         boolean confirmar = GestorDialogos.mostrarConfirmacionEstandar(
-            "Confirmar limpieza", 
-            "¿Vaciar editor?", 
-            "Se borrará todo el texto actual. ¿Deseas continuar?", 
-            "Limpiar"
-        );
-        
+                "Confirmar limpieza",
+                "¿Vaciar editor?",
+                "Se borrará todo el texto actual. ¿Deseas continuar?",
+                "Limpiar");
+
         if (confirmar) {
             editorProtocolo.clear();
             listaActores.getItems().clear();
-            listaActores.getItems().add("KDC"); 
+            listaActores.getItems().add("KDC");
             tablaVulnerabilidades.getItems().clear();
-            // Eliminado this.archivoActual = null; para evitar perder el archivo al limpiar.
-            this.ultimoProtocoloAnalizado = null; 
+            // Eliminado this.archivoActual = null; para evitar perder el archivo al
+            // limpiar.
+            this.ultimoProtocoloAnalizado = null;
         }
     }
 
     private void actualizarListaActores(Protocolo protocolo) {
         if (!listaActores.getItems().contains("KDC")) {
-            listaActores.getItems().add("KDC"); 
+            listaActores.getItems().add("KDC");
         }
         for (com.tfg.analizador.modelo.Agente agente : protocolo.getAgentes()) {
             if (!listaActores.getItems().contains(agente.getNombre())) {

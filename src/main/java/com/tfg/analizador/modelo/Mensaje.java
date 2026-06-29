@@ -1,6 +1,7 @@
 package com.tfg.analizador.modelo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Mensaje {
@@ -8,7 +9,8 @@ public class Mensaje {
     private Agente emisor;
     private Agente receptor;
     private String textoPlano;
-    //antes era un string de texto cifrado pero al implementar elementosMensajes es mucho mejor usar una lista de estos
+    // antes era un string de texto cifrado pero al implementar elementosMensajes es
+    // mucho mejor usar una lista de estos
     private List<ElementoMensaje> componentes;
 
     public Mensaje(int numeroLinea, Agente emisor, Agente receptor, String textoPlano) {
@@ -19,21 +21,44 @@ public class Mensaje {
         this.componentes = new ArrayList<>();
     }
 
-    public Agente getEmisor() { return emisor; }
-    public void setEmisor(Agente emisor) { this.emisor = emisor; }
+    public Agente getEmisor() {
+        return emisor;
+    }
 
-    public Agente getReceptor() { return receptor; }
-    public void setReceptor(Agente receptor) { this.receptor = receptor; }
+    public void setEmisor(Agente emisor) {
+        this.emisor = emisor;
+    }
 
-    public int getNumeroLinea() { return numeroLinea; }
-    public void setNumeroLinea(int numeroLinea) { this.numeroLinea = numeroLinea; }
+    public Agente getReceptor() {
+        return receptor;
+    }
 
-    public String getTextoPlano() { return textoPlano; }
-    public void setTextoPlano(String textoPlano) { this.textoPlano = textoPlano; }
+    public void setReceptor(Agente receptor) {
+        this.receptor = receptor;
+    }
 
-    public List<ElementoMensaje> getComponentes() { return componentes; }
-    
-    public void anadirComponente(ElementoMensaje componente) { 
-        this.componentes.add(componente); 
+    public int getNumeroLinea() {
+        return numeroLinea;
+    }
+
+    public void setNumeroLinea(int numeroLinea) {
+        this.numeroLinea = numeroLinea;
+    }
+
+    public String getTextoPlano() {
+        return textoPlano;
+    }
+
+    public void setTextoPlano(String textoPlano) {
+        this.textoPlano = textoPlano;
+    }
+
+    // Lista inmutable para proteger el encapsulamiento.
+    public List<ElementoMensaje> getComponentes() {
+        return Collections.unmodifiableList(componentes);
+    }
+
+    public void anadirComponente(ElementoMensaje componente) {
+        this.componentes.add(componente);
     }
 }

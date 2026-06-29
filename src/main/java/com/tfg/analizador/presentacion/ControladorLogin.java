@@ -60,8 +60,8 @@ public class ControladorLogin {
             // Si no hay excepciones, se inició sesión correctamente
             lblError.getStyleClass().remove("mensaje-error");
             lblError.getStyleClass().add("mensaje-exito");
-            lblError.setText("¡Bienveido, " + usAutenticado.getNombreUsuario() + "!");
-            
+            lblError.setText("¡Bienvenido, " + usAutenticado.getNombreUsuario() + "!");
+
             // Damos paso a la vista del dashboard
             GestorVistas.irADashB();
 
@@ -76,9 +76,9 @@ public class ControladorLogin {
         }
     }
 
-    //mandar a la pestaña de registro
+    // Mandar a la pestaña de registro
     @FXML
-    void handleRegistrarAction(ActionEvent event) throws Exception{
+    void handleRegistrarAction(ActionEvent event) throws Exception {
 
         GestorVistas.irARegistro();
 

@@ -1,6 +1,7 @@
 package com.tfg.analizador.modelo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -9,8 +10,8 @@ public class Protocolo {
     private String nombreProtocolo;
     private Date fechaAnalisis;
     private boolean seguro;
-    private String rutaArchivo; 
-    
+    private String rutaArchivo;
+
     // Contenedores de datos
     private List<Mensaje> mensajes;
     private List<Agente> agentes;
@@ -44,19 +45,56 @@ public class Protocolo {
     }
 
     // Getters
-    public int getIdProtocolo() { return idProtocolo; }
-    public String getNombreProtocolo() { return nombreProtocolo; }
-    public Date getFechaAnalisis() { return fechaAnalisis; }
-    public boolean isSeguro() { return seguro; }
-    public String getRutaArchivo() { return rutaArchivo; } // NUEVO
-    public List<Mensaje> getMensajes() { return mensajes; }
-    public List<Agente> getAgentes() { return agentes; }
-    public List<Vulnerabilidad> getVulnerabilidades() { return vulnerabilidades; }
+    public int getIdProtocolo() {
+        return idProtocolo;
+    }
+
+    public String getNombreProtocolo() {
+        return nombreProtocolo;
+    }
+
+    public Date getFechaAnalisis() {
+        return fechaAnalisis;
+    }
+
+    public boolean isSeguro() {
+        return seguro;
+    }
+
+    public String getRutaArchivo() {
+        return rutaArchivo;
+    }
+
+    public List<Mensaje> getMensajes() {
+        return Collections.unmodifiableList(mensajes);
+    }
+
+    public List<Agente> getAgentes() {
+        return Collections.unmodifiableList(agentes);
+    }
+
+    public List<Vulnerabilidad> getVulnerabilidades() {
+        return Collections.unmodifiableList(vulnerabilidades);
+    }
 
     // Setters
-    public void setIdProtocolo(int idProtocolo) { this.idProtocolo = idProtocolo; }
-    public void setNombreProtocolo(String nombreProtocolo) { this.nombreProtocolo = nombreProtocolo; }
-    public void setFechaAnalisis(Date fechaAnalisis) { this.fechaAnalisis = fechaAnalisis; }
-    public void setSeguro(boolean seguro) { this.seguro = seguro; }
-    public void setRutaArchivo(String rutaArchivo) { this.rutaArchivo = rutaArchivo; } // NUEVO
+    public void setIdProtocolo(int idProtocolo) {
+        this.idProtocolo = idProtocolo;
+    }
+
+    public void setNombreProtocolo(String nombreProtocolo) {
+        this.nombreProtocolo = nombreProtocolo;
+    }
+
+    public void setFechaAnalisis(Date fechaAnalisis) {
+        this.fechaAnalisis = fechaAnalisis;
+    }
+
+    public void setSeguro(boolean seguro) {
+        this.seguro = seguro;
+    }
+
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
+    } // NUEVO
 }

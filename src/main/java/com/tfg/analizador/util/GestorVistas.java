@@ -16,7 +16,10 @@ public class GestorVistas {
 
     private static Stage escenarioPrincipal;
 
-    public enum TipoPantalla { LOGIN, REGISTRO, DASHBOARD, ANALIZADOR, DESCONOCIDA, PERFIL, GUIA, RECUPERAR_PASS }
+    public enum TipoPantalla {
+        LOGIN, REGISTRO, DASHBOARD, ANALIZADOR, DESCONOCIDA, PERFIL, GUIA, RECUPERAR_PASS
+    }
+
     private static TipoPantalla pantallaActual = TipoPantalla.DESCONOCIDA;
     private static TipoPantalla pantallaAnterior = TipoPantalla.DESCONOCIDA;
 
@@ -43,7 +46,7 @@ public class GestorVistas {
         cambiarEscena("/com/tfg/analizador/VistaRegistro.fxml", "TFG - Registrar cuenta");
     }
 
-    public static void irADashB(){
+    public static void irADashB() {
         pantallaActual = TipoPantalla.DASHBOARD;
         cambiarEscena("/com/tfg/analizador/VistaDashBoard.fxml", "TFG - DashBoard");
     }
@@ -67,7 +70,7 @@ public class GestorVistas {
     private static void cargarAnalizador(String contenido, File archivo) {
         String rutaFXML = "/com/tfg/analizador/VistaAnalizador.fxml";
         URL url = GestorVistas.class.getResource(rutaFXML);
-        
+
         if (url == null) {
             System.err.println("ERROR CRÍTICO: No se encuentra el archivo FXML en: " + rutaFXML);
             return;
@@ -75,22 +78,22 @@ public class GestorVistas {
 
         try {
             pantallaActual = TipoPantalla.ANALIZADOR;
-            
+
             // Carga manual del FXML
             FXMLLoader loader = new FXMLLoader(url);
             Parent root = loader.load();
 
             // Obtenemos los controladores
             ControladorAnalisis controladorAnalisis = loader.getController();
-            
-            // Si venimos de la función "Importar Protocolo", inyectamos el archivo en el editor
+
+            // Si venimos de la función "Importar Protocolo", inyectamos el archivo en el
+            // editor
             if (contenido != null && archivo != null) {
                 controladorAnalisis.cargarTextoEnEditor(contenido, archivo);
             }
-            
-            // Asumiendo que en tu VistaAnalizador.fxml tienes: <fx:include fx:id="menuSuperior" source="MenuSuperior.fxml" />
+
             ControladorMenu controladorMenu = (ControladorMenu) loader.getNamespace().get("menuSuperiorController");
-            
+
             if (controladorMenu != null) {
                 controladorMenu.setControladorAnalisis(controladorAnalisis);
             }
@@ -99,7 +102,7 @@ public class GestorVistas {
             Scene escena = new Scene(root);
             escenarioPrincipal.setTitle("TFG - Analizador de Protocolos (Editor)");
             escenarioPrincipal.setScene(escena);
-            
+
         } catch (IOException e) {
             System.err.println("Error al cargar la vista del analizador");
             e.printStackTrace();
@@ -107,7 +110,7 @@ public class GestorVistas {
     }
 
     public static void mostrarGuiaUsuario() {
-        pantallaAnterior = pantallaActual; // <-- Memorizamos de dónde venimos
+        pantallaAnterior = pantallaActual;
         pantallaActual = TipoPantalla.GUIA;
         cambiarEscena("/com/tfg/analizador/VistaGuia.fxml", "TFG - Guía de Usuario");
     }
@@ -118,33 +121,33 @@ public class GestorVistas {
     }
 
     private static void cambiarEscena(String rutaFXML, String titulo) {
-            
-            if (escenarioPrincipal == null) {
-                System.err.println("Error: El escenario principal no ha sido inicializado en GestorVistas.");
-                return;
-            }
 
-            URL url = GestorVistas.class.getResource(rutaFXML);
+        if (escenarioPrincipal == null) {
+            System.err.println("Error: El escenario principal no ha sido inicializado en GestorVistas.");
+            return;
+        }
 
-            //Para evitar fallos desconocidos si no encuentra la ruta buscaremos la ruta y
-            // comprobaremos que no sea nula si lo es se cierra el programa
-            if (url == null) {
-                System.err.println("Error crítico: No se encontró el archivo FXML en: " + rutaFXML);
-                return;
-            }
+        URL url = GestorVistas.class.getResource(rutaFXML);
 
-            try {
-                // Leer el diseño
-                Parent base = FXMLLoader.load(url);
+        // Para evitar fallos desconocidos si no encuentra la ruta buscaremos la ruta y
+        // comprobaremos que no sea nula si lo es se cierra el programa
+        if (url == null) {
+            System.err.println("Error crítico: No se encontró el archivo FXML en: " + rutaFXML);
+            return;
+        }
 
-                //creamos una escena para poder mostrar el diseño
-                Scene escena = new Scene(base);
-                escenarioPrincipal.setTitle(titulo);
-                escenarioPrincipal.setScene(escena);
-                
-            } catch (IOException e) {
-                System.err.println("Error al cargar la vista: " + rutaFXML);
-                e.printStackTrace();
-            }
+        try {
+            // Leer el diseño
+            Parent base = FXMLLoader.load(url);
+
+            // creamos una escena para poder mostrar el diseño
+            Scene escena = new Scene(base);
+            escenarioPrincipal.setTitle(titulo);
+            escenarioPrincipal.setScene(escena);
+
+        } catch (IOException e) {
+            System.err.println("Error al cargar la vista: " + rutaFXML);
+            e.printStackTrace();
+        }
     }
 }
