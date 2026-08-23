@@ -33,7 +33,7 @@ public class AnalizadorLexico {
             
             Matcher matcher = patternLinea.matcher(linea);
             if (!matcher.matches()) {
-                throw new IllegalArgumentException("Error de sintaxis en la línea " + (i + 1) + ": Estructura incorrecta. Use el formato 'Emisor -> Receptor : Mensaje'.");
+                throw new AnalizadorException("Error de sintaxis en la línea " + (i + 1) + ": Estructura incorrecta. Use el formato 'Emisor -> Receptor : Mensaje'.");
             }
         }
         return true;
@@ -42,7 +42,7 @@ public class AnalizadorLexico {
     // Transforma el texto bruto en el AST completo para el Motor de Análisis.
     public Protocolo compilarProtocolo(String nombreProtocolo, String textoPlano) {
         if (textoPlano == null || textoPlano.trim().isEmpty()) {
-            throw new IllegalArgumentException("El protocolo no puede estar vacío.");
+            throw new AnalizadorException("El protocolo no puede estar vacío.");
         }
 
         Protocolo protocolo = new Protocolo(nombreProtocolo);
@@ -63,7 +63,7 @@ public class AnalizadorLexico {
             
             // Validamos y extraemos en el mismo paso
             if (!matcher.matches()) {
-                throw new IllegalArgumentException("Error de sintaxis en la línea " + numeroLinea + ": Estructura incorrecta. Use el formato 'Emisor -> Receptor : Mensaje'.");
+                throw new AnalizadorException("Error de sintaxis en la línea " + numeroLinea + ": Estructura incorrecta. Use el formato 'Emisor -> Receptor : Mensaje'.");
             }
 
             // Sacamos los trozos exactos detectados por los paréntesis del RegEx

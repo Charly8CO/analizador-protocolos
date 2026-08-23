@@ -83,7 +83,7 @@ public class GestorArchivos {
             document.add(pCodigo);
 
             // Tabla de Vulnerabilidades
-            if (!p.isSeguro() && !p.getVulnerabilidades().isEmpty()) {
+            if (!p.getVulnerabilidades().isEmpty()) {
                 document.add(new Paragraph("Vulnerabilidades Detectadas:", fontSubtitulo));
                 document.add(new Paragraph("\n"));
 

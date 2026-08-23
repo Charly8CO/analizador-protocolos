@@ -40,8 +40,8 @@ public class AnalizadorLexicoTest {
 
         // Verifica que tu analizador reacciona lanzando la excepción adecuada ante
         // cadenas corruptas
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(AnalizadorException.class, () -> {
             lexico.compilarProtocolo("ProtocoloInvalido", specInvalida);
-        }, "El analizador debería lanzar IllegalArgumentException ante una sintaxis rota.");
+        }, "El analizador debería lanzar AnalizadorException ante una sintaxis rota.");
     }
 }

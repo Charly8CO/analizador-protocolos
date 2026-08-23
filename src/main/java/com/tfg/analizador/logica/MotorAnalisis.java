@@ -80,7 +80,7 @@ public class MotorAnalisis {
                             for (ElementoMensaje hijo : c.getContenido())
                                 extraerNoncesRecursivo(hijo, noncesDentro);
 
-                            // A) Búsqueda interna: Comprobamos si el ticket cerrado incluye una garantía de
+                            // Búsqueda interna: Comprobamos si el ticket cerrado incluye una garantía de
                             // frescura
                             for (Nonce n : noncesDentro) {
                                 String base = getBaseNonce(n.getIdentificador());
@@ -553,14 +553,25 @@ public class MotorAnalisis {
         }
     }
 
-    // Comprueba si el identificador de un elemento contiene una mutación u
-    // operación matemática.
+    // Comprueba si el identificador de un elemento contiene una mutación,
+    // operación matemática (+, -) o aplicación de función F(N).
     private boolean tieneOperacion(String identificador) {
-        return identificador.contains("+") || identificador.contains("-");
+        return identificador.contains("+") || identificador.contains("-")
+                || (identificador.contains("(") && identificador.contains(")"));
     }
 
-    // Limpia operaciones aritméticas devolviendo la base de la variable
+    // Limpia operaciones aritméticas o funciones devolviendo la base de la variable.
+    // Soporta N_A+1, N_A-1 y F(N_A), H(N_Bob), etc.
     private String getBaseNonce(String identificador) {
+        // Si contiene paréntesis, extraemos el contenido interior: F(N_A) -> N_A
+        if (identificador.contains("(") && identificador.contains(")")) {
+            int abre = identificador.indexOf('(');
+            int cierra = identificador.lastIndexOf(')');
+            if (abre < cierra) {
+                return identificador.substring(abre + 1, cierra).trim();
+            }
+        }
+        // Limpieza clásica de operaciones aritméticas: N_A+1 -> N_A
         return identificador.split("[\\+\\-]", 2)[0].trim();
     }
 

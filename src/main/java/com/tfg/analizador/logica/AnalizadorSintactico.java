@@ -24,7 +24,7 @@ public class AnalizadorSintactico {
 
     private List<ElementoMensaje> parsearContenidoInterno(String contenido, Agente actorCreador, int profundidad) {
         if (profundidad > MAX_PROFUNDIDAD) {
-            throw new IllegalArgumentException(
+            throw new AnalizadorException(
                     "Error: Nivel de anidamiento criptográfico excesivo (>" + MAX_PROFUNDIDAD + "). "
                             + "Revise la estructura del protocolo.");
         }
@@ -80,6 +80,23 @@ public class AnalizadorSintactico {
 
             // Devolvemos el bloque cifrado
             return cifrado;
+        }
+
+        // Detectar Nonce envuelto en función: F(N_A), H(N_Bob), G(T_Alice), etc.
+        // Se clasifica como Nonce manteniendo el identificador completo (ej. "F(N_A)")
+        // para que el motor lo reconozca como operación/mutación.
+        if (token.contains("(") && token.contains(")")) {
+            int abre = token.indexOf('(');
+            int cierra = token.lastIndexOf(')');
+            if (abre < cierra) {
+                if (abre == 0) {
+                    throw new AnalizadorException("Error de Sintaxis: Se han encontrado paréntesis sin nombre de función en '" + token + "'. Debe indicar una función delante, por ejemplo 'F" + token + "' o 'Hash" + token + "'.");
+                }
+                String interior = token.substring(abre + 1, cierra).trim();
+                if (interior.startsWith("N_") || interior.startsWith("N") || interior.startsWith("T_") || interior.startsWith("Time")) {
+                    return new Nonce(token, actorCreador);
+                }
+            }
         }
 
         // Detectar Nonce y TimeStamps, empiezan por N o por T

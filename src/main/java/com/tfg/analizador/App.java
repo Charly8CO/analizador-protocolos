@@ -24,7 +24,9 @@ public class App extends Application{
         //Cargamos el login
         GestorVistas.irALogin();
 
-        escenarioBase.setResizable(false);
+        escenarioBase.setResizable(true);
+        escenarioBase.setMinWidth(1024);
+        escenarioBase.setMinHeight(700);
         escenarioBase.setOnCloseRequest(event -> GestorBBDD.cerrarConexion());
         escenarioBase.show();
 

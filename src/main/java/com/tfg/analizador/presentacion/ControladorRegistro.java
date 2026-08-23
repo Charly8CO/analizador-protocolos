@@ -74,6 +74,17 @@ public class ControladorRegistro {
             return;
         }
 
+        try {
+            GestorUsuarios gestor = new GestorUsuarios();
+            if (gestor.existeUsuario(email)) {
+                mostrarError("Ese correo electrónico ya está registrado.");
+                return;
+            }
+        } catch (Exception e) {
+            mostrarError("Error de base de datos: " + e.getMessage());
+            return;
+        }
+
         // Bloqueamos la interfaz para evitar interacciones concurrentes durante la
         // espera del servidor SMTP
         btnRegistrar.setDisable(true);

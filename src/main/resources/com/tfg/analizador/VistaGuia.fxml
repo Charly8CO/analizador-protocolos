@@ -62,6 +62,7 @@
                                         <Label text="• Nonces: Deben empezar por N_ (N_A)." wrapText="true" />
                                         <Label text="• Claves: Deben empezar por K_ (K_ab)." wrapText="true" />
                                         <Label text="• Timestamps: Deben empezar por T_ o Time (T_1)." wrapText="true" />
+                                        <Label text="• Operaciones sobre Nonces: N_A+1, N_A-1 o F(N_A)." wrapText="true" />
                                     </children>
                                 </VBox>
 
@@ -106,8 +107,8 @@
                                             <Label text="Un agente envía un criptograma cerrado utilizando una clave simétrica que no posee legalmente en su repertorio de conocimiento." wrapText="true" />
                                         </VBox>
                                         <VBox spacing="5.0" GridPane.rowIndex="1">
-                                            <Label text="Riesgo de Reflexión (Type Flaw)" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />
-                                            <Label text="El emisor espera recibir de vuelta un criptograma matemáticamente idéntico al que él mismo originó, permitiendo que un atacante le devuelva su propio paquete como un espejo." wrapText="true" />
+                                            <Label text="Advertencia: Reflexión (Type Flaw)" style="-fx-font-weight: bold; -fx-text-fill: #D68910;" />
+                                            <Label text="El emisor espera recibir de vuelta un criptograma matemáticamente idéntico al que él mismo originó, permitiendo que un atacante le devuelva su propio paquete como un espejo. Se clasifica como advertencia porque su viabilidad real depende de la coincidencia de tamaños de bloque en la implementación final." wrapText="true" />
                                         </VBox>
                                         <VBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                             <Label text="Fallo de Desafío-Respuesta" style="-fx-font-weight: bold; -fx-text-fill: #C0392B;" />

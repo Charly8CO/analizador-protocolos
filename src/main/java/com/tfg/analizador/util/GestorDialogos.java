@@ -24,6 +24,7 @@ public class GestorDialogos {
         alerta.setTitle("Advertencia");
         alerta.setHeaderText(null);
         alerta.setContentText(mensaje);
+        alerta.getDialogPane().setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
 
         // Se crean los botones
         ButtonType botonCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -68,6 +69,7 @@ public class GestorDialogos {
         alerta.setTitle(titulo);
         alerta.setHeaderText(cabecera);
         alerta.setContentText(mensaje);
+        alerta.getDialogPane().setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
 
         ButtonType botonCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType botonConfirmar = new ButtonType(textoBotonConfirmar, ButtonBar.ButtonData.OK_DONE);

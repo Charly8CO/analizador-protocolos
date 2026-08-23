@@ -98,10 +98,20 @@ public class GestorVistas {
                 controladorMenu.setControladorAnalisis(controladorAnalisis);
             }
 
+            double width = escenarioPrincipal.getWidth();
+            double height = escenarioPrincipal.getHeight();
+            boolean isMaximized = escenarioPrincipal.isMaximized();
+
             // Cambiamos la escena
             Scene escena = new Scene(root);
             escenarioPrincipal.setTitle("TFG - Analizador de Protocolos (Editor)");
             escenarioPrincipal.setScene(escena);
+
+            if (!Double.isNaN(width) && width > 0) {
+                escenarioPrincipal.setWidth(width);
+                escenarioPrincipal.setHeight(height);
+            }
+            escenarioPrincipal.setMaximized(isMaximized);
 
         } catch (IOException e) {
             System.err.println("Error al cargar la vista del analizador");
@@ -140,10 +150,20 @@ public class GestorVistas {
             // Leer el diseño
             Parent base = FXMLLoader.load(url);
 
+            double width = escenarioPrincipal.getWidth();
+            double height = escenarioPrincipal.getHeight();
+            boolean isMaximized = escenarioPrincipal.isMaximized();
+
             // creamos una escena para poder mostrar el diseño
             Scene escena = new Scene(base);
             escenarioPrincipal.setTitle(titulo);
             escenarioPrincipal.setScene(escena);
+
+            if (!Double.isNaN(width) && width > 0) {
+                escenarioPrincipal.setWidth(width);
+                escenarioPrincipal.setHeight(height);
+            }
+            escenarioPrincipal.setMaximized(isMaximized);
 
         } catch (IOException e) {
             System.err.println("Error al cargar la vista: " + rutaFXML);
