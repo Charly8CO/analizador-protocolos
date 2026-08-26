@@ -10,6 +10,10 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Ellipse?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.text.Font?>
 
 <BorderPane prefHeight="711.0" prefWidth="1277.0" styleClass="dashboard-container" stylesheets="@EstilosVistas.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tfg.analizador.presentacion.ControladorPrincipal">
@@ -45,7 +49,7 @@
                      <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                      </padding>
-                     <Label text="Estadísticas Visuales" alignment="CENTER" maxWidth="Infinity">
+                     <Label text="EstadÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­sticas Visuales" alignment="CENTER" maxWidth="Infinity">
                            <font><Font name="System Bold" size="14.0" /></font>
                      </Label>
                      
@@ -61,7 +65,15 @@
                <VBox spacing="30.0" HBox.hgrow="ALWAYS">
                   
                   <VBox alignment="CENTER">
-                     <Ellipse fill="WHITE" radiusX="120.0" radiusY="80.0" stroke="#2c3e50" strokeWidth="2.0" />
+                     <Ellipse radiusX="120.0" radiusY="80.0" stroke="#2c3e50" strokeWidth="2.0">
+    <fill>
+        <javafx.scene.paint.ImagePattern>
+            <image>
+                <javafx.scene.image.Image url="@LogoFinal.jpg" />
+            </image>
+        </javafx.scene.paint.ImagePattern>
+    </fill>
+</Ellipse>
                   </VBox>
 
                   <VBox spacing="10.0" styleClass="panel-tarjeta-clara" VBox.vgrow="ALWAYS">
