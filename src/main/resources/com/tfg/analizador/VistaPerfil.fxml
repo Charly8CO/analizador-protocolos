@@ -19,13 +19,13 @@
                 <padding>
                     <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
                 </padding>
-                <Button text="&lt; Volver" onAction="#handleVolver" style="-fx-background-color: transparent; -fx-text-fill: #2C3E50; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Button text="&lt; Ir a Pestaña Principal" onAction="#handleVolver" style="-fx-background-color: transparent; -fx-text-fill: #2C3E50; -fx-font-weight: bold; -fx-cursor: hand;"/>
                 <Label text="GESTIÓN DE CUENTA" alignment="CENTER" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                     <font>
                         <Font name="System Bold" size="18.0" />
                     </font>
                 </Label>
-                <Button text="&lt; Volver" visible="false" /> </HBox>
+                <Button text="&lt; Ir al Dashboard" visible="false" /> </HBox>
         </VBox>
     </top>
 
@@ -51,7 +51,7 @@
                     <Label text="Cambiar contraseña:" />
                     
                     <VBox spacing="5.0">
-                        <Label text="Contraseña actual:" />
+                        <Label text="contraseña actual:" />
                         <PasswordField fx:id="txtPassActual" style="-fx-border-color: black; -fx-background-color: white; -fx-padding: 5;" />
                     </VBox>
 

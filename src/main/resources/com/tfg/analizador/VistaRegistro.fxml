@@ -37,7 +37,7 @@
                   <Label styleClass="label" text="Correo electrónico / Usuario" />
                   <TextField fx:id="txtEmail" promptText="Introduce tu correo" styleClass="text-field" />
                   
-                  <Label text="Contraseña">
+                  <Label text="contraseña">
                      <VBox.margin><Insets top="10.0" /></VBox.margin>
                   </Label>
                   <PasswordField fx:id="txtPass" promptText="***********" styleClass="password-field" />

@@ -12,7 +12,7 @@
                 
                 <MenuItem text="Importar (abrir) protocolo" onAction="#handleImportarProtocolo" />
                 
-                <MenuItem text="Pestaña pricipal" onAction="#handleVolverPrincipal" />
+                <MenuItem text="Pestaña principal" onAction="#handleVolverPrincipal" />
             </items>
         </Menu>
         <Menu text="Herramientas">

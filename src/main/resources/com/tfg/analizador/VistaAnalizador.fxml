@@ -27,7 +27,7 @@
                     <padding><Insets bottom="10.0" top="10.0" /></padding>
                 </Label>
                 
-                <Button onAction="#handleValidarSintaxis" maxWidth="Infinity" text="Validar sintáxis" styleClass="boton-herramienta" prefHeight="35.0" />
+                <Button onAction="#handleValidarSintaxis" maxWidth="Infinity" text="Validar sintaxis" styleClass="boton-herramienta" prefHeight="35.0" />
                 
                 <Button onAction="#handleAnalizarProtocolo" maxWidth="Infinity" text="Analizar protocolo" styleClass="boton-herramienta" prefHeight="35.0" />
                 

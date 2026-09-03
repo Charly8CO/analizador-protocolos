@@ -16,7 +16,7 @@
             
             <VBox alignment="CENTER" styleClass="header-bar">
                <children>
-                  <Label styleClass="title-label" text="Recuperar Contraseña" />
+                  <Label styleClass="title-label" text="Recuperar contraseña" />
                </children>
             </VBox>
 
@@ -70,10 +70,10 @@
             <VBox fx:id="cajaNuevaPass" spacing="10.0" visible="false" managed="false">
                <padding><Insets bottom="30.0" left="40.0" right="40.0" top="10.0" /></padding>
                <children>
-                  <Label text="Nueva Contraseña" />
+                  <Label text="Nueva contraseña" />
                   <PasswordField fx:id="txtNuevaPass" promptText="***********" styleClass="password-field" />
                   
-                  <Label text="Confirmar Nueva Contraseña">
+                  <Label text="Confirmar Nueva contraseña">
                      <VBox.margin><Insets top="10.0" /></VBox.margin>
                   </Label>
                   <PasswordField fx:id="txtConfirmarPass" promptText="***********" styleClass="password-field" />
@@ -81,7 +81,7 @@
                   <HBox alignment="CENTER_RIGHT">
                      <VBox.margin><Insets bottom="20.0" top="15.0" /></VBox.margin>
                      <children>
-                        <Button fx:id="btnActualizar" onAction="#handleActualizarPass" styleClass="button-confirm" text="Actualizar Contraseña" />
+                        <Button fx:id="btnActualizar" onAction="#handleActualizarPass" styleClass="button-confirm" text="Actualizar contraseña" />
                      </children>
                   </HBox>
                </children>

@@ -49,7 +49,7 @@
                      <padding>
                            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
                      </padding>
-                     <Label text="EstadÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­sticas Visuales" alignment="CENTER" maxWidth="Infinity">
+                     <Label text="Estadísticas Visuales" alignment="CENTER" maxWidth="Infinity">
                            <font><Font name="System Bold" size="14.0" /></font>
                      </Label>
                      

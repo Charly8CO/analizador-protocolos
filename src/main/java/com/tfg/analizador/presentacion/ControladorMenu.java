@@ -118,6 +118,17 @@ public class ControladorMenu {
 
     @FXML
     void handleVerPerfil(ActionEvent event) {
+        if (GestorVistas.getPantallaActual() == GestorVistas.TipoPantalla.ANALIZADOR) {
+            boolean confirmado = GestorDialogos.mostrarConfirmacionEstandar(
+                    "Advertencia",
+                    "Análisis en progreso",
+                    "Si abres tu cuenta ahora, perderás el análisis actual no guardado en pantalla. ¿Deseas continuar?",
+                    "Continuar a la cuenta");
+
+            if (!confirmado) {
+                return;
+            }
+        }
         GestorVistas.irAPerfil();
     }
 

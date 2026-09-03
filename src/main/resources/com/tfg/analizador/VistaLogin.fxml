@@ -30,7 +30,7 @@
                   <Label text="Correo / Usuario" />
                   <TextField fx:id="txtUsuario" promptText="Introduce tu usuario" styleClass="text-field" />
                   
-                  <Label text="Contraseña">
+                  <Label text="contraseña">
                      <VBox.margin>
                         <Insets top="10.0" />
                      </VBox.margin>
