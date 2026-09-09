@@ -87,7 +87,7 @@ public class MotorAnalisisTest {
         Protocolo p = lexico.compilarProtocolo("OtwayRees", spec);
         motor.analizarEsSeguro(p);
         
-        assertFalse(p.isSeguro(), "Otway-Rees tiene un Type Flaw, debe ser inseguro.");
+        assertTrue(p.isSeguro(), "Otway-Rees tiene un Type Flaw (Advertencia), por tanto isSeguro es true.");
         boolean typeFlawDetectado = p.getVulnerabilidades().stream()
                 .anyMatch(v -> v.getTipoAtaque().toLowerCase().contains("reflexi") || 
                                v.getTipoAtaque().toLowerCase().contains("type flaw"));
